@@ -24,8 +24,8 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
 | M1.1 | completed | Initialize Expo application workspace structure | Expo scaffold implemented in mobile/; iOS/Android runtime validation deferred per user environment setup |
-| M1.2 | not-started | Configure Firebase project and environment wiring | Keep secrets out of source control |
-| M1.3 | not-started | Set up linting, test runner, and baseline CI checks | Testing required for behavior changes |
+| M1.2 | completed | Configure Firebase project and environment wiring | Firebase init/auth/env setup complete with manual signed-in/signed-out verification in web dev runtime |
+| M1.3 | completed | Set up linting, test runner, and baseline CI checks | ESLint + Prettier config + Jest smoke test + PR CI workflow added |
 
 ### M2 - Day Management Core
 | Task ID | Status | Description | Notes |
@@ -58,3 +58,7 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M0.5 | Firebase-aligned data model spec created | completed | docs/DATA_MODEL_SPEC.md |
 | 2026-07-17 | M0.6 | UX flow map created | completed | docs/UX_FLOW_MAP.md |
 | 2026-07-17 | M1.1 | Expo app foundation scaffolded and config validated | completed | mobile/ created, expo-doctor 20/20, platform runtime checks deferred by user |
+| 2026-07-17 | M1.2 | Firebase/auth/env implementation started | in-progress | Wiring runtime initialization and startup auth bootstrap |
+| 2026-07-17 | M1.2 | Firebase/auth/env implementation and runtime verification complete | completed | .env configured, Firebase auth bootstrap verified by user, anonymous sign-in/sign-out flow validated |
+| 2026-07-17 | M1.3 | Tooling baseline implementation started | in-progress | Adding lint, formatting, tests, and CI checks |
+| 2026-07-17 | M1.3 | Tooling baseline implementation and validation complete | completed | npm run lint passed, npm run test -- --watch=false passed, npm run test:coverage passed, CI workflow added; npm run format:check reports existing formatting drift |

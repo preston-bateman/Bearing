@@ -22,8 +22,8 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
 | M1.1 | completed | Initialize Expo app and folder structure | Expo TypeScript app scaffolded in mobile/ with baseline structure and config; platform runtime validation deferred per user environment setup |
-| M1.2 | not-started | Configure Firebase project, auth, env management | Auth and config verified in dev |
-| M1.3 | not-started | Add lint, formatter, tests, and CI baseline | CI validates lint and tests on PR |
+| M1.2 | completed | Configure Firebase project, auth, env management | Firebase init/auth bootstrap and env strategy validated in development |
+| M1.3 | completed | Add lint, formatter, tests, and CI baseline | CI validates lint and tests on PR |
 | M1.4 | not-started | Set up navigation shell with bottom tabs | Calendar, Goals, Notes, Profile tabs routable |
 
 ### M2 - Design System and UX Foundation
@@ -117,6 +117,5 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 - Product gate: UX and copy align with product brief.
 
 ## Immediate Next Steps
-1. Start M1.2 by implementing Firebase project environment strategy.
-2. Start M1.3 by configuring lint/test/CI baseline.
-3. Start M1.4 by creating bottom-tab navigation shell placeholders.
+1. Start M1.3 by configuring lint/test/CI baseline.
+2. Start M1.4 by creating bottom-tab navigation shell placeholders.
