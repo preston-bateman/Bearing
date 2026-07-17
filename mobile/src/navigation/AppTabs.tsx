@@ -6,6 +6,7 @@ import { CalendarScreen } from '../screens/CalendarScreen';
 import { GoalsScreen } from '../screens/GoalsScreen';
 import { NotesScreen } from '../screens/NotesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { colors, componentTokens, layout, typography } from '../design/tokens';
 
 export type AppTabParamList = {
   Calendar: undefined;
@@ -43,8 +44,8 @@ export function AppTabs({ onPressSignOut, isSignOutPending }: AppTabsProps) {
         initialRouteName="Calendar"
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#0E5E85',
-          tabBarInactiveTintColor: '#6A8795',
+          tabBarActiveTintColor: colors.brand,
+          tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: styles.tabBar,
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarIcon: ({ focused }) => (
@@ -65,33 +66,31 @@ export function AppTabs({ onPressSignOut, isSignOutPending }: AppTabsProps) {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 72,
-    paddingBottom: 10,
-    paddingTop: 10,
-    backgroundColor: '#FCFEFF',
-    borderTopColor: '#D3E1E8',
+    height: layout.tabBarHeight,
+    paddingBottom: layout.tabBarPaddingVertical,
+    paddingTop: layout.tabBarPaddingVertical,
+    backgroundColor: componentTokens.tabBar.backgroundColor,
+    borderTopColor: componentTokens.tabBar.borderTopColor,
   },
   tabBarLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.tabLabel,
   },
   iconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: layout.tabIconSize,
+    height: layout.tabIconSize,
+    borderRadius: layout.tabIconRadius,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D7E6ED',
+    backgroundColor: componentTokens.tabIcon.backgroundColor,
   },
   iconCircleFocused: {
-    backgroundColor: '#0E5E85',
+    backgroundColor: componentTokens.tabIcon.focusedBackgroundColor,
   },
   iconText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#496879',
+    ...typography.tabIcon,
+    color: componentTokens.tabIcon.textColor,
   },
   iconTextFocused: {
-    color: '#F4F8FA',
+    color: componentTokens.tabIcon.focusedTextColor,
   },
 });

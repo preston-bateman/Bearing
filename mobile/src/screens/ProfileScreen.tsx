@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { colors, spacing } from '../design/tokens';
+import { ListItem } from '../components/ui/ListItem';
 import { TabPlaceholderScreen } from './TabPlaceholderScreen';
 
 type ProfileScreenProps = {
@@ -14,35 +16,21 @@ export function ProfileScreen({ onPressSignOut, isSignOutPending }: ProfileScree
       description="Manage account settings, premium access, and future calendar connections."
       routeId="tabs/profile"
     >
-      <Pressable
+      <ListItem
         onPress={onPressSignOut}
-        style={[styles.button, isSignOutPending ? styles.buttonDisabled : null]}
+        title="Sign Out"
+        description="Sign out remains available here while profile features are still placeholders."
+        trailingText={isSignOutPending ? 'Working...' : 'Action'}
         disabled={isSignOutPending}
       >
-        <Text style={styles.buttonText}>{isSignOutPending ? 'Working...' : 'Sign Out'}</Text>
-      </Pressable>
-      <Text style={styles.helper}>Sign out remains available here while profile features are still placeholders.</Text>
+        
+      </ListItem>
     </TabPlaceholderScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignSelf: 'flex-start',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#0E5E85',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: '#F4F8FA',
-    fontWeight: '600',
-  },
-  helper: {
-    fontSize: 14,
-    color: '#496879',
+  spacer: {
+    gap: spacing.md,
   },
 });

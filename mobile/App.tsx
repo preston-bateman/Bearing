@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppTabs } from './src/navigation/AppTabs';
 import { useAuthBootstrap } from './src/features/auth/useAuthBootstrap';
 import { signInWithAnonymousAuth, signOutCurrentUser } from './src/services/firebase/firebaseAuthActions';
+import { colors, componentTokens, layout, spacing, typography } from './src/design/tokens';
 
 export default function App() {
   const { status, user, error } = useAuthBootstrap();
@@ -96,53 +97,52 @@ export default function App() {
 const styles = StyleSheet.create({
   authenticatedContainer: {
     flex: 1,
-    backgroundColor: '#F4F8FA',
+    backgroundColor: colors.background,
   },
   tabsContainer: {
     flex: 1,
   },
   authErrorBanner: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 12,
-    gap: 4,
-    backgroundColor: '#FDEAEA',
+    paddingHorizontal: layout.pagePaddingHorizontal,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: colors.dangerSurface,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F4F8FA',
+    backgroundColor: colors.background,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 12,
+    paddingHorizontal: layout.pagePaddingHorizontal,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: '#0B1F2A',
+    ...typography.title,
+    color: colors.text,
   },
   block: {
     width: '100%',
-    gap: 8,
+    gap: spacing.sm,
   },
   body: {
-    fontSize: 16,
-    color: '#153748',
+    ...typography.body,
+    color: colors.textPrimary,
   },
   helper: {
-    fontSize: 14,
-    color: '#496879',
+    ...typography.helper,
+    color: colors.textSecondary,
   },
   button: {
     alignSelf: 'flex-start',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#0E5E85',
+    borderRadius: componentTokens.button.borderRadius,
+    paddingHorizontal: componentTokens.button.paddingHorizontal,
+    paddingVertical: componentTokens.button.paddingVertical,
+    backgroundColor: componentTokens.button.backgroundColor,
   },
   buttonText: {
-    color: '#F4F8FA',
-    fontWeight: '600',
+    color: componentTokens.button.textColor,
+    ...typography.button,
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#8A1E1E',
+    color: colors.dangerText,
   },
   errorText: {
     fontSize: 14,
-    color: '#8A1E1E',
+    color: colors.dangerText,
   },
 });

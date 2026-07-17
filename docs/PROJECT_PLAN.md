@@ -31,8 +31,8 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 ### M2 - Day Management Core
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
-| M2.1 | not-started | Create daily schedule/task data model and state flows | Reuse repository patterns |
-| M2.2 | not-started | Implement daily task creation and completion flows | Validate public behavior with tests |
+| M2.1 | completed | Create daily schedule/task data model and state flows | Reuse repository patterns; shared design tokens committed and applied to the current UI shell |
+| M2.2 | in-progress | Implement daily task creation and completion flows | Introducing reusable UI primitives that will support task flows and the day-management shell |
 | M2.3 | not-started | Add daily overview screen and progress indicators | Keep UI consistent with app design system |
 
 ### M3 - Life Goals Core
@@ -66,3 +66,5 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M1.4 | Bottom tab navigation shell implementation started | in-progress | Adding authenticated bottom-tab shell with Calendar, Goals, Notes, and Profile placeholders |
 | 2026-07-17 | M1.4 | Bottom tab navigation shell implemented and automated validation passed | in-progress | Calendar initial route documented in code; npm run test -- --watch=false, npx tsc --noEmit, and npm run lint passed; awaiting manual iOS/Android tap-through confirmation |
 | 2026-07-17 | M1.4 | Bottom tab navigation shell fully validated | completed | Manual iOS/Android tab tap-through confirmed by user; M1.4 acceptance criteria met |
+| 2026-07-17 | M2.1 | Design token foundation started | in-progress | Centralizing colors, spacing, and typography into shared mobile/src/design tokens |
+| 2026-07-17 | M2.1 | Design token foundation implemented and approved | completed | `npx tsc --noEmit` passed; manual verification approved by user |

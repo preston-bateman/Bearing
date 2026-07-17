@@ -24,13 +24,13 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | M1.1 | completed | Initialize Expo app and folder structure | Expo TypeScript app scaffolded in mobile/ with baseline structure and config; platform runtime validation deferred per user environment setup |
 | M1.2 | completed | Configure Firebase project, auth, env management | Firebase init/auth bootstrap and env strategy validated in development |
 | M1.3 | completed | Add lint, formatter, tests, and CI baseline | CI validates lint and tests on PR |
-| M1.4 | not-started | Set up navigation shell with bottom tabs | Calendar, Goals, Notes, Profile tabs routable |
+| M1.4 | completed | Set up navigation shell with bottom tabs | Calendar, Goals, Notes, Profile tabs routable |
 
 ### M2 - Design System and UX Foundation
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M2.1 | not-started | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
-| M2.2 | not-started | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
+| M2.1 | completed | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
+| M2.2 | in-progress | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
 | M2.3 | not-started | Define interaction states (loading, empty, error, completed/past) | State patterns implemented and consistent |
 
 ### M3 - Calendar and Focus Mode

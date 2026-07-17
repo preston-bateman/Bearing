@@ -1,0 +1,52 @@
+import { Pressable, StyleSheet, Text } from 'react-native';
+
+import { componentTokens, radii, spacing, typography } from '../../design/tokens';
+
+type FloatingActionButtonProps = {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+};
+
+export function FloatingActionButton({ label, onPress, disabled = false }: FloatingActionButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.button, pressed && !disabled ? styles.buttonPressed : null, disabled ? styles.buttonDisabled : null]}
+    >
+      <Text style={styles.icon}>+</Text>
+      <Text style={styles.label}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  button: {
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: componentTokens.button.backgroundColor,
+  },
+  buttonPressed: {
+    opacity: 0.86,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  icon: {
+    ...typography.button,
+    color: componentTokens.button.textColor,
+    lineHeight: 18,
+  },
+  label: {
+    ...typography.button,
+    color: componentTokens.button.textColor,
+  },
+});
