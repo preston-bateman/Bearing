@@ -16,7 +16,7 @@ Implementation-ready tickets for M1 Foundation and Tooling from roadmap item M1.
 | M1.1 | completed | Initialize Expo app structure and baseline app config | None |
 | M1.2 | completed | Configure Firebase project setup, auth bootstrap, and env strategy | M1.1 |
 | M1.3 | completed | Set up linting, formatting, tests, and CI checks | M1.1 |
-| M1.4 | not-started | Implement bottom tab navigation shell and screen placeholders | M1.1, M1.2 |
+| M1.4 | completed | Implement bottom tab navigation shell and screen placeholders | M1.1, M1.2 |
 
 ---
 
@@ -157,6 +157,17 @@ Provide the app-level navigation backbone with four tabs and placeholder screens
 - npx expo start --android
 - npm run test -- --watch=false
 - Manual tap-through test across all tabs
+
+### Implementation Notes (2026-07-17)
+- Added React Navigation bottom tabs in `mobile/src/navigation/AppTabs.tsx` with stable tab names: Calendar, Goals, Notes, and Profile.
+- Set `Calendar` as the intentional initial route to match the product brief and UX flow.
+- Navigation state persistence is intentionally not enabled in M1.4; the placeholder shell resets to the Calendar tab on fresh app launch until deeper modal and restoration requirements are introduced.
+- Added placeholder tab screens in `mobile/src/screens/` with stable route identifiers: `tabs/calendar`, `tabs/goals`, `tabs/notes`, and `tabs/profile`.
+- Updated `mobile/App.tsx` so authenticated users enter the tab shell while signed-out and startup-error flows remain unchanged.
+- Kept sign-out available in the Profile placeholder to preserve the existing auth validation path until profile features are implemented.
+- Added app-shell coverage in `mobile/src/__tests__/App.smoke.test.tsx` to verify authenticated entry into the tab shell and tab switching behavior.
+- Automated validation passed: `npm run test -- --watch=false`, `npx tsc --noEmit`, and `npm run lint`.
+- Manual validation confirmed: user completed iOS/Android tap-through across all four tabs without navigation crashes.
 
 ---
 

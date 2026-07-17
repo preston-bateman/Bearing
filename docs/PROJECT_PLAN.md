@@ -26,6 +26,7 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | M1.1 | completed | Initialize Expo application workspace structure | Expo scaffold implemented in mobile/; iOS/Android runtime validation deferred per user environment setup |
 | M1.2 | completed | Configure Firebase project and environment wiring | Firebase init/auth/env setup complete with manual signed-in/signed-out verification in web dev runtime |
 | M1.3 | completed | Set up linting, test runner, and baseline CI checks | ESLint + Prettier config + Jest smoke test + PR CI workflow added |
+| M1.4 | completed | Implement bottom tab navigation shell and screen placeholders | Authenticated tab shell implemented; manual iOS/Android tap-through validation confirmed |
 
 ### M2 - Day Management Core
 | Task ID | Status | Description | Notes |
@@ -62,3 +63,6 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M1.2 | Firebase/auth/env implementation and runtime verification complete | completed | .env configured, Firebase auth bootstrap verified by user, anonymous sign-in/sign-out flow validated |
 | 2026-07-17 | M1.3 | Tooling baseline implementation started | in-progress | Adding lint, formatting, tests, and CI checks |
 | 2026-07-17 | M1.3 | Tooling baseline implementation and validation complete | completed | npm run lint passed, npm run test -- --watch=false passed, npm run test:coverage passed, CI workflow added; npm run format:check reports existing formatting drift |
+| 2026-07-17 | M1.4 | Bottom tab navigation shell implementation started | in-progress | Adding authenticated bottom-tab shell with Calendar, Goals, Notes, and Profile placeholders |
+| 2026-07-17 | M1.4 | Bottom tab navigation shell implemented and automated validation passed | in-progress | Calendar initial route documented in code; npm run test -- --watch=false, npx tsc --noEmit, and npm run lint passed; awaiting manual iOS/Android tap-through confirmation |
+| 2026-07-17 | M1.4 | Bottom tab navigation shell fully validated | completed | Manual iOS/Android tab tap-through confirmed by user; M1.4 acceptance criteria met |
