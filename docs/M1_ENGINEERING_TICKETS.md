@@ -14,8 +14,8 @@ Implementation-ready tickets for M1 Foundation and Tooling from roadmap item M1.
 | Ticket ID | Status | Summary | Depends On |
 | --- | --- | --- | --- |
 | M1.1 | completed | Initialize Expo app structure and baseline app config | None |
-| M1.2 | not-started | Configure Firebase project setup, auth bootstrap, and env strategy | M1.1 |
-| M1.3 | not-started | Set up linting, formatting, tests, and CI checks | M1.1 |
+| M1.2 | completed | Configure Firebase project setup, auth bootstrap, and env strategy | M1.1 |
+| M1.3 | completed | Set up linting, formatting, tests, and CI checks | M1.1 |
 | M1.4 | not-started | Implement bottom tab navigation shell and screen placeholders | M1.1, M1.2 |
 
 ---
@@ -83,6 +83,16 @@ Integrate Firebase project configuration and establish secure environment variab
 - npm run test -- --watch=false
 - Verify auth bootstrap behavior in simulator/emulator manually
 
+### Implementation Notes (2026-07-17)
+- Added runtime env validation in `mobile/src/services/config/firebaseEnv.ts` with actionable missing-key errors.
+- Added idempotent Firebase app and auth initialization in `mobile/src/services/firebase/`.
+- Added auth bootstrap state hook in `mobile/src/features/auth/useAuthBootstrap.ts` and wired startup gate UI in `mobile/App.tsx`.
+- Added `mobile/.env.example` and `mobile/docs/FIREBASE_SETUP.md` for local/staging/production env strategy and setup steps.
+- Added auth action handlers in `mobile/src/services/firebase/firebaseAuthActions.ts` to validate signed-out to signed-in transitions.
+- Firebase Console setup completed and local `.env` populated for development runtime verification.
+- Manual verification completed: app shows `No active session found`, `Open Sign-In Entry` signs in successfully, and `Sign Out` returns app to signed-out state.
+- Validation note: `npm run lint` and `npm run test -- --watch=false` remain pending until M1.3 tooling scripts are introduced.
+
 ---
 
 ## M1.3 Lint, Tests, and CI Baseline
@@ -111,6 +121,14 @@ Create baseline quality gates so feature work in later milestones has consistent
 - npm run test -- --watch=false
 - npm run test -- --coverage
 - Trigger CI pipeline and verify status checks
+
+### Implementation Notes (2026-07-17)
+- Added ESLint flat config in `mobile/eslint.config.js` and scripts in `mobile/package.json`.
+- Added Prettier baseline config in `mobile/.prettierrc.json` and `mobile/.prettierignore`.
+- Added Jest baseline with `jest-expo` preset in `mobile/jest.config.js`.
+- Added app-shell smoke test in `mobile/src/__tests__/App.smoke.test.tsx` that validates signed-out entry behavior.
+- Added GitHub Actions workflow at `.github/workflows/mobile-quality-checks.yml` to run lint and tests on pull requests.
+- Local validation passed for lint and tests (including coverage). `npm run format:check` currently reports repository formatting drift and is not yet CI-gated.
 
 ---
 
