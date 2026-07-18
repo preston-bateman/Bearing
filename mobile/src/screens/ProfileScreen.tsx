@@ -1,6 +1,3 @@
-import { StyleSheet } from 'react-native';
-
-import { colors, spacing } from '../design/tokens';
 import { ListItem } from '../components/ui/ListItem';
 import { TabPlaceholderScreen } from './TabPlaceholderScreen';
 
@@ -22,15 +19,7 @@ export function ProfileScreen({ onPressSignOut, isSignOutPending }: ProfileScree
         description="Sign out remains available here while profile features are still placeholders."
         trailingText={isSignOutPending ? 'Working...' : 'Action'}
         disabled={isSignOutPending}
-      >
-        
-      </ListItem>
+      />
     </TabPlaceholderScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  spacer: {
-    gap: spacing.md,
-  },
-});

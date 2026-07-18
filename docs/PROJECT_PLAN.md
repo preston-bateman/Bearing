@@ -32,7 +32,7 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
 | M2.1 | completed | Create daily schedule/task data model and state flows | Reuse repository patterns; shared design tokens committed and applied to the current UI shell |
-| M2.2 | in-progress | Implement daily task creation and completion flows | Introducing reusable UI primitives that will support task flows and the day-management shell |
+| M2.2 | completed | Implement daily task creation and completion flows | Reusable UI primitives now support the day-management shell and future task flows |
 | M2.3 | not-started | Add daily overview screen and progress indicators | Keep UI consistent with app design system |
 
 ### M3 - Life Goals Core
@@ -68,3 +68,5 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M1.4 | Bottom tab navigation shell fully validated | completed | Manual iOS/Android tab tap-through confirmed by user; M1.4 acceptance criteria met |
 | 2026-07-17 | M2.1 | Design token foundation started | in-progress | Centralizing colors, spacing, and typography into shared mobile/src/design tokens |
 | 2026-07-17 | M2.1 | Design token foundation implemented and approved | completed | `npx tsc --noEmit` passed; manual verification approved by user |
+| 2026-07-17 | M2.2 | Reusable UI primitives implementation started | in-progress | Adding card, modal, FAB, list item, and header primitives to support day-management UI |
+| 2026-07-17 | M2.2 | Reusable UI primitives implementation and validation complete | completed | `npx tsc --noEmit`, `npm run lint`, and `npm test -- --runInBand` passed |

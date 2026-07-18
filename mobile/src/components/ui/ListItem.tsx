@@ -11,21 +11,35 @@ type ListItemProps = {
 };
 
 export function ListItem({ title, description, trailingText, onPress, disabled = false }: ListItemProps) {
-  const Container = onPress ? Pressable : View;
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        disabled={disabled}
+        style={({ pressed }: { pressed?: boolean }) => [
+          styles.item,
+          pressed && !disabled ? styles.itemPressed : null,
+          disabled ? styles.itemDisabled : null,
+        ]}
+      >
+        <View style={styles.copyBlock}>
+          <Text style={styles.title}>{title}</Text>
+          {description ? <Text style={styles.description}>{description}</Text> : null}
+        </View>
+        {trailingText ? <Text style={styles.trailingText}>{trailingText}</Text> : null}
+      </Pressable>
+    );
+  }
 
   return (
-    <Container
-      accessibilityRole={onPress ? 'button' : undefined}
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }: { pressed?: boolean }) => [styles.item, pressed && onPress && !disabled ? styles.itemPressed : null, disabled ? styles.itemDisabled : null]}
-    >
+    <View style={[styles.item, disabled ? styles.itemDisabled : null]}>
       <View style={styles.copyBlock}>
         <Text style={styles.title}>{title}</Text>
         {description ? <Text style={styles.description}>{description}</Text> : null}
       </View>
       {trailingText ? <Text style={styles.trailingText}>{trailingText}</Text> : null}
-    </Container>
+    </View>
   );
 }
 

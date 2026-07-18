@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 31, 42, 0.42)',
   },
   backdropPressArea: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   sheet: {
     borderTopLeftRadius: radii.xl,

@@ -30,7 +30,7 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
 | M2.1 | completed | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
-| M2.2 | in-progress | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
+| M2.2 | completed | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
 | M2.3 | not-started | Define interaction states (loading, empty, error, completed/past) | State patterns implemented and consistent |
 
 ### M3 - Calendar and Focus Mode
