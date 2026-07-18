@@ -33,14 +33,22 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | --- | --- | --- | --- |
 | M2.1 | completed | Create daily schedule/task data model and state flows | Reuse repository patterns; shared design tokens committed and applied to the current UI shell |
 | M2.2 | completed | Implement daily task creation and completion flows | Reusable UI primitives now support the day-management shell and future task flows |
-| M2.3 | not-started | Add daily overview screen and progress indicators | Keep UI consistent with app design system |
+| M2.3 | completed | Add daily overview screen and progress indicators | Calendar daily overview finalized with event-focused loading, empty, error, completed/past interaction states; progress tracking intentionally deferred to Goals |
 
-### M3 - Life Goals Core
+### M3 - Calendar and Focus Mode
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
-| M3.1 | not-started | Create life-goal model and milestone tracking | Avoid speculative fields |
-| M3.2 | not-started | Implement goal creation/editing and timeline views | Preserve public API stability |
-| M3.3 | not-started | Add goal progress summaries and rollups | Include edge-case validation |
+| M3.1 | completed | Build calendar screen interaction model | Day view (hourly timeline) + month view (horizontally scrollable grid); no week view |
+| M3.2 | completed | Add calendar event CRUD baseline | Firestore-backed; fields aligned to DATA_MODEL_SPEC; service layer + React hooks + modals |
+| M3.3 | not-started | Implement Idea Dump capture to Notes pipeline | |
+| M3.4 | not-started | Implement Focus Mode UI and active event timer | |
+
+### M4 - Life Goals Core
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M4.1 | not-started | Create life-goal model and milestone tracking | Avoid speculative fields |
+| M4.2 | not-started | Implement goal creation/editing and timeline views | Preserve public API stability |
+| M4.3 | not-started | Add goal progress summaries and rollups | Include edge-case validation |
 
 ## Update Rules
 - Read this file before starting a task.
@@ -70,3 +78,9 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M2.1 | Design token foundation implemented and approved | completed | `npx tsc --noEmit` passed; manual verification approved by user |
 | 2026-07-17 | M2.2 | Reusable UI primitives implementation started | in-progress | Adding card, modal, FAB, list item, and header primitives to support day-management UI |
 | 2026-07-17 | M2.2 | Reusable UI primitives implementation and validation complete | completed | `npx tsc --noEmit`, `npm run lint`, and `npm test -- --runInBand` passed |
+| 2026-07-17 | M2.3 | Daily overview and progress indicators implementation started | in-progress | Building Calendar daily overview with consistent loading, empty, error, completed/past interaction states |
+| 2026-07-17 | M2.3 | Daily overview and progress indicators implementation and validation complete | completed | `npx tsc --noEmit`, `npm run lint`, and `npm test` passed with new Calendar state coverage |
+| 2026-07-17 | M2.3 | Calendar copy and behavior aligned to event-first product direction | completed | Removed Calendar progress bar/progress copy; retained event state patterns and reserved progress tracking for Goals |
+| 2026-07-17 | M3.1 | Calendar screen interaction model implementation started | in-progress | Day view (hourly timeline) + month view (horizontally scrollable grid) |
+| 2026-07-17 | M3.1 | Calendar screen interaction model implementation and validation complete | completed | npm test (4 suites, 19 tests), npx tsc --noEmit, npm run lint all passed |
+| 2026-07-17 | M3.2 | Calendar event CRUD baseline implementation and validation complete | completed | firebaseEvents service + useCalendarEvents hook + AddEventModal + EventDetailModal; npm test (19 tests), npx tsc, npm run lint passed |

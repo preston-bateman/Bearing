@@ -31,15 +31,15 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | --- | --- | --- | --- |
 | M2.1 | completed | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
 | M2.2 | completed | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
-| M2.3 | not-started | Define interaction states (loading, empty, error, completed/past) | State patterns implemented and consistent |
+| M2.3 | completed | Define interaction states (loading, empty, error, completed/past) | Calendar state patterns implemented and consistent with event-first language; progress tracking intentionally reserved for Goals |
 
 ### M3 - Calendar and Focus Mode
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M3.1 | not-started | Build calendar screen interaction model | Calendar view stable and performant |
-| M3.2 | not-started | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
+| M3.1 | not-started | Build calendar screen interaction model | Calendar day and month views stable and performant |
+| M3.2 | not-started | Add calendar event CRUD baseline | Local app event lifecycle functional |
 | M3.3 | not-started | Implement Idea Dump capture to Notes pipeline | Idea Dump creates note records reliably |
-| M3.4 | not-started | Add calendar event CRUD baseline | Local app event lifecycle functional |
+| M3.4 | not-started | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
 
 ### M4 - Goals Core Experience
 | Task ID | Status | Description | Exit Criteria |
@@ -117,5 +117,5 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 - Product gate: UX and copy align with product brief.
 
 ## Immediate Next Steps
-1. Start M1.3 by configuring lint/test/CI baseline.
-2. Start M1.4 by creating bottom-tab navigation shell placeholders.
+1. Start M3.1 by implementing Apple-calendar-inspired day view (hourly timeline) and month view (horizontally scrollable month grid) with date navigation.
+2. Start M3.2 by implementing local calendar event CRUD backed by Firestore.

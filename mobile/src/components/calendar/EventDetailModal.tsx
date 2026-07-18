@@ -1,0 +1,225 @@
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { AppModal } from '../ui/AppModal';
+import { colors, radii, spacing, typography } from '../../design/tokens';
+import { CalendarEvent } from '../../features/calendar/calendarTypes';
+
+type EventDetailModalProps = {
+  event: CalendarEvent | null;
+  onClose: () => void;
+  onDelete: (eventId: string) => Promise<void>;
+};
+
+const MONTH_NAMES_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+function formatTimeRange(startAt: Date, endAt: Date): string {
+  function fmt(d: Date): string {
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 === 0 ? 12 : h % 12;
+    const displayM = m.toString().padStart(2, '0');
+    return `${displayH}:${displayM} ${period}`;
+  }
+  return `${fmt(startAt)} – ${fmt(endAt)}`;
+}
+
+function formatFullDate(date: Date): string {
+  const month = MONTH_NAMES_SHORT[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${month} ${day}, ${year}`;
+}
+
+function statusLabel(status: CalendarEvent['status']): string {
+  if (status === 'completed') return 'Completed';
+  if (status === 'canceled') return 'Canceled';
+  return 'Scheduled';
+}
+
+export function EventDetailModal({ event, onClose, onDelete }: EventDetailModalProps) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  function handleClose(): void {
+    setConfirmingDelete(false);
+    setDeleteError(null);
+    onClose();
+  }
+
+  async function handleConfirmDelete(): Promise<void> {
+    if (!event) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await onDelete(event.id);
+      handleClose();
+    } catch {
+      setDeleteError('Failed to delete event. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <AppModal visible={event !== null} title="Event Details" onClose={handleClose}>
+      {event ? (
+        <>
+          <Text style={styles.eventTitle}>{event.title}</Text>
+
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Date</Text>
+            <Text style={styles.metaValue}>{formatFullDate(event.startAt)}</Text>
+          </View>
+
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Time</Text>
+            <Text style={styles.metaValue}>{formatTimeRange(event.startAt, event.endAt)}</Text>
+          </View>
+
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Status</Text>
+            <Text style={[styles.metaValue, event.status === 'completed'
+                ? { color: colors.brand }
+                : event.status === 'canceled'
+                  ? { color: colors.dangerText }
+                  : { color: colors.textSecondary }]}>
+              {statusLabel(event.status)}
+            </Text>
+          </View>
+
+          {event.description ? (
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Description</Text>
+              <Text style={styles.metaValue}>{event.description}</Text>
+            </View>
+          ) : null}
+
+          {deleteError ? <Text style={styles.errorText}>{deleteError}</Text> : null}
+
+          {!confirmingDelete ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Delete event"
+              onPress={() => setConfirmingDelete(true)}
+              style={({ pressed }) => [styles.deleteButton, pressed ? styles.deleteButtonPressed : null]}
+            >
+              <Text style={styles.deleteButtonText}>Delete Event</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.confirmRow}>
+              <Text style={styles.confirmText}>Delete this event permanently?</Text>
+              <View style={styles.confirmButtons}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel delete"
+                  onPress={() => setConfirmingDelete(false)}
+                  style={({ pressed }) => [styles.cancelButton, pressed ? styles.cancelButtonPressed : null]}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Confirm delete"
+                  onPress={deleting ? undefined : handleConfirmDelete}
+                  style={({ pressed }) => [
+                    styles.confirmDeleteButton,
+                    deleting ? styles.confirmDeleteButtonDisabled : null,
+                    pressed && !deleting ? styles.confirmDeleteButtonPressed : null,
+                  ]}
+                >
+                  <Text style={styles.confirmDeleteButtonText}>
+                    {deleting ? 'Deleting…' : 'Yes, Delete'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </>
+      ) : null}
+    </AppModal>
+  );
+}
+
+const styles = StyleSheet.create({
+  eventTitle: {
+    ...typography.button,
+    fontSize: 18,
+    color: colors.text,
+  },
+  metaRow: {
+    gap: spacing.xs,
+  },
+  metaLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  metaValue: {
+    ...typography.body,
+    color: colors.text,
+  },
+  errorText: {
+    ...typography.helper,
+    color: colors.dangerText,
+  },
+  deleteButton: {
+    borderRadius: radii.sm,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.dangerSurface,
+    alignItems: 'center',
+  },
+  deleteButtonPressed: {
+    opacity: 0.8,
+  },
+  deleteButtonText: {
+    ...typography.button,
+    color: colors.dangerText,
+  },
+  confirmRow: {
+    gap: spacing.sm,
+  },
+  confirmText: {
+    ...typography.body,
+    color: colors.text,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  cancelButton: {
+    flex: 1,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+  },
+  cancelButtonPressed: {
+    opacity: 0.8,
+  },
+  cancelButtonText: {
+    ...typography.button,
+    color: colors.textPrimary,
+  },
+  confirmDeleteButton: {
+    flex: 1,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.dangerSurface,
+    alignItems: 'center',
+  },
+  confirmDeleteButtonDisabled: {
+    opacity: 0.5,
+  },
+  confirmDeleteButtonPressed: {
+    opacity: 0.8,
+  },
+  confirmDeleteButtonText: {
+    ...typography.button,
+    color: colors.dangerText,
+  },
+});
