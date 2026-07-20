@@ -79,7 +79,7 @@ export function GoalsScreen() {
     }
 
     await createStep(selectedGoal.id, input);
-    setAddStepVisible(false);
+    closeGoalDetails();
   }
 
   async function handleSaveGoal(
@@ -185,7 +185,7 @@ export function GoalsScreen() {
 
       <GoalDetailsModal
         goal={selectedGoal}
-        visible={selectedGoal !== null}
+        visible={selectedGoal !== null && !addStepVisible}
         onClose={closeGoalDetails}
         onSaveGoal={handleSaveGoal}
         onMarkGoalCompleted={markGoalCompleted}

@@ -241,6 +241,56 @@ describe('GoalsScreen', () => {
     jest.useRealTimers();
   });
 
+  it('creates a step from goal details, closes the modal stack, and uses the dropdown date picker', async () => {
+    const createStepMock = jest.fn(async () => undefined);
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: async () => undefined,
+      markGoalCompleted: async () => undefined,
+      createStep: createStepMock,
+      updateStep: async () => undefined,
+      reorderSteps: async () => undefined,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'idle' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+    fireEvent.press(screen.getByLabelText('Add step'));
+
+    expect(screen.queryByText('Goal Details')).toBeNull();
+    expect(screen.queryByLabelText('Step estimated finish date')).toBeNull();
+    expect(screen.getByText('Selected date: 07-21-2026')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByLabelText('Step name'), 'Book a training block');
+    fireEvent.changeText(screen.getByLabelText('Step description'), 'Pick sessions for the next eight weeks.');
+    fireEvent.changeText(screen.getByLabelText('Step starter'), 'Open the calendar');
+    fireEvent.press(screen.getByLabelText('Open step target month dropdown'));
+    fireEvent.press(screen.getByLabelText('Select step target month 08 - Aug'));
+    fireEvent.press(screen.getByLabelText('Open step target day dropdown'));
+    fireEvent.press(screen.getByLabelText('Select step target day 12'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Save step'));
+    });
+
+    await waitFor(() => {
+      expect(createStepMock).toHaveBeenCalledWith('goal-1', {
+        title: 'Book a training block',
+        description: 'Pick sessions for the next eight weeks.',
+        starter: 'Open the calendar',
+        estimatedFinishDate: new Date(2026, 7, 12),
+      });
+      expect(screen.queryByText('Goal Details')).toBeNull();
+      expect(screen.queryByText('Add Step')).toBeNull();
+    });
+  });
+
   it('opens goal details and marks a goal complete from edit mode', async () => {
     const markGoalCompletedMock = jest.fn(async () => undefined);
     const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;

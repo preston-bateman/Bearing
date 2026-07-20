@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AppModal } from '../ui/AppModal';
 import { colors, radii, spacing, typography } from '../../design/tokens';
@@ -11,30 +11,109 @@ type AddStepModalProps = {
   onSave: (input: CreateGoalStepInput) => Promise<void>;
 };
 
-function parseDateString(value: string): Date | null {
-  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) {
-    return null;
-  }
+type GoalDateField = 'month' | 'day' | 'year';
+type GoalDateParts = {
+  month: number;
+  day: number;
+  year: number;
+};
 
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+const MONTH_OPTIONS = [
+  { value: 1, label: '01 - Jan' },
+  { value: 2, label: '02 - Feb' },
+  { value: 3, label: '03 - Mar' },
+  { value: 4, label: '04 - Apr' },
+  { value: 5, label: '05 - May' },
+  { value: 6, label: '06 - Jun' },
+  { value: 7, label: '07 - Jul' },
+  { value: 8, label: '08 - Aug' },
+  { value: 9, label: '09 - Sep' },
+  { value: 10, label: '10 - Oct' },
+  { value: 11, label: '11 - Nov' },
+  { value: 12, label: '12 - Dec' },
+] as const;
+
+const YEAR_OPTION_COUNT = 51;
+
+function addDays(date: Date, days: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function buildDefaultGoalDateParts(baseDate: Date): GoalDateParts {
+  const tomorrow = addDays(baseDate, 1);
+  return {
+    month: tomorrow.getMonth() + 1,
+    day: tomorrow.getDate(),
+    year: tomorrow.getFullYear(),
+  };
+}
+
+function formatTwoDigits(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function formatGoalDateParts(parts: GoalDateParts): string {
+  return `${formatTwoDigits(parts.month)}-${formatTwoDigits(parts.day)}-${parts.year}`;
+}
+
+function getGoalDateFromParts(parts: GoalDateParts): Date {
+  return new Date(parts.year, parts.month - 1, parts.day);
+}
+
+function getDayOptions(month: number, year: number): number[] {
+  const maxDay = new Date(year, month, 0).getDate();
+  return Array.from({ length: maxDay }, (_, index) => index + 1);
+}
+
+function isFutureDate(date: Date, today: Date): boolean {
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return dateOnly.getTime() > todayOnly.getTime();
 }
 
 export function AddStepModal({ visible, onClose, onSave }: AddStepModalProps) {
+  const today = useMemo(() => new Date(), []);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [starter, setStarter] = useState('');
-  const [estimatedFinishDate, setEstimatedFinishDate] = useState('');
+  const [dateParts, setDateParts] = useState<GoalDateParts>(() => buildDefaultGoalDateParts(today));
+  const [activeDateField, setActiveDateField] = useState<GoalDateField | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const yearOptions = useMemo(
+    () => Array.from({ length: YEAR_OPTION_COUNT }, (_, index) => today.getFullYear() + index),
+    [today],
+  );
+  const dayOptions = useMemo(
+    () => getDayOptions(dateParts.month, dateParts.year),
+    [dateParts.month, dateParts.year],
+  );
 
   function resetForm(): void {
     setTitle('');
     setDescription('');
     setStarter('');
-    setEstimatedFinishDate('');
+    setDateParts(buildDefaultGoalDateParts(today));
+    setActiveDateField(null);
     setSaving(false);
+    setError(null);
+  }
+
+  function updateDateField(field: GoalDateField, value: number): void {
+    setDateParts((current) => {
+      const next = { ...current, [field]: value };
+      const validDays = getDayOptions(next.month, next.year);
+
+      if (!validDays.includes(next.day)) {
+        next.day = validDays[validDays.length - 1];
+      }
+
+      return next;
+    });
+    setActiveDateField(null);
     setError(null);
   }
 
@@ -49,12 +128,9 @@ export function AddStepModal({ visible, onClose, onSave }: AddStepModalProps) {
       return;
     }
 
-    const parsedDate = estimatedFinishDate.trim()
-      ? parseDateString(estimatedFinishDate)
-      : null;
-
-    if (estimatedFinishDate.trim() && !parsedDate) {
-      setError('Estimated finish date must use YYYY-MM-DD.');
+    const parsedDate = getGoalDateFromParts(dateParts);
+    if (!isFutureDate(parsedDate, today)) {
+      setError('Estimated finish date must be in the future.');
       return;
     }
 
@@ -114,16 +190,70 @@ export function AddStepModal({ visible, onClose, onSave }: AddStepModalProps) {
         />
       </View>
 
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Estimated finish date (YYYY-MM-DD)</Text>
-        <TextInput
-          accessibilityLabel="Step estimated finish date"
-          value={estimatedFinishDate}
-          onChangeText={setEstimatedFinishDate}
-          style={styles.input}
-          placeholder="2026-08-15"
-          placeholderTextColor={colors.textSecondary}
-        />
+      <View style={styles.section}>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Estimated finish date</Text>
+          <Text style={styles.dateSummary}>Selected date: {formatGoalDateParts(dateParts)}</Text>
+          <Text style={styles.dateHint}>Format: MM-DD-YYYY</Text>
+        </View>
+
+        <View style={styles.dateFieldRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open step target month dropdown"
+            onPress={() => setActiveDateField((current) => (current === 'month' ? null : 'month'))}
+            style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.saveButtonPressed : null]}
+          >
+            <Text style={styles.dateFieldLabel}>Month</Text>
+            <Text style={styles.dateFieldValue}>{formatTwoDigits(dateParts.month)}</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open step target day dropdown"
+            onPress={() => setActiveDateField((current) => (current === 'day' ? null : 'day'))}
+            style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.saveButtonPressed : null]}
+          >
+            <Text style={styles.dateFieldLabel}>Day</Text>
+            <Text style={styles.dateFieldValue}>{formatTwoDigits(dateParts.day)}</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open step target year dropdown"
+            onPress={() => setActiveDateField((current) => (current === 'year' ? null : 'year'))}
+            style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.saveButtonPressed : null]}
+          >
+            <Text style={styles.dateFieldLabel}>Year</Text>
+            <Text style={styles.dateFieldValue}>{dateParts.year}</Text>
+          </Pressable>
+        </View>
+
+        {activeDateField ? (
+          <View style={styles.dropdownCard}>
+            <Text style={styles.dropdownTitle}>
+              {activeDateField === 'month' ? 'Select month' : activeDateField === 'day' ? 'Select day' : 'Select year'}
+            </Text>
+            <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+              {(activeDateField === 'month'
+                ? MONTH_OPTIONS.map((option) => ({ value: option.value, label: option.label }))
+                : activeDateField === 'day'
+                  ? dayOptions.map((day) => ({ value: day, label: formatTwoDigits(day) }))
+                  : yearOptions.map((year) => ({ value: year, label: String(year) }))
+              ).map((option) => (
+                <Pressable
+                  key={`${activeDateField}-${option.value}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select step target ${activeDateField} ${option.label}`}
+                  onPress={() => updateDateField(activeDateField, option.value)}
+                  style={({ pressed }) => [styles.dropdownOption, pressed ? styles.saveButtonPressed : null]}
+                >
+                  <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -146,6 +276,9 @@ export function AddStepModal({ visible, onClose, onSave }: AddStepModalProps) {
 }
 
 const styles = StyleSheet.create({
+  section: {
+    gap: spacing.md,
+  },
   fieldGroup: {
     gap: spacing.xs,
   },
@@ -166,6 +299,62 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 90,
     textAlignVertical: 'top',
+  },
+  dateFieldRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  dateFieldButton: {
+    flex: 1,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  dateFieldLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  dateFieldValue: {
+    ...typography.body,
+    color: colors.text,
+  },
+  dateSummary: {
+    ...typography.body,
+    color: colors.text,
+  },
+  dateHint: {
+    ...typography.helper,
+    color: colors.textSecondary,
+  },
+  dropdownCard: {
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  dropdownTitle: {
+    ...typography.helper,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  dropdownList: {
+    maxHeight: 176,
+  },
+  dropdownOption: {
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  dropdownOptionText: {
+    ...typography.body,
+    color: colors.textPrimary,
   },
   errorText: {
     ...typography.helper,
