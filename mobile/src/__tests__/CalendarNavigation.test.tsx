@@ -1,8 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { formatDayLabel } from '../components/calendar/DayNavBar';
+
+jest.mock('../features/notes/useNotes', () => ({
+  useNotes: jest.fn(() => ({
+    notes: [],
+    uiState: 'empty',
+    createNote: async () => undefined,
+  })),
+}));
 
 // Mock Firebase services
 jest.mock('../services/firebase/firebaseAuth', () => ({
@@ -77,6 +85,32 @@ describe('CalendarScreen navigation', () => {
     const expectedLabel = formatDayLabel(new Date(2026, 6, 20));
     expect(screen.getByText(expectedLabel)).toBeTruthy();
     expect(screen.getByLabelText('Previous day')).toBeTruthy();
+  });
+
+  it('opens Focus Mode from the secondary FAB', () => {
+    render(<CalendarScreen initialDateOverride={FIXED_DATE} />);
+
+    fireEvent.press(screen.getByText('Focus'));
+
+    expect(screen.getByLabelText('Idea dump input')).toBeTruthy();
+    expect(screen.getByLabelText('Hold to return to calendar')).toBeTruthy();
+  });
+
+  it('returns to Calendar after holding the exit control for three seconds', () => {
+    jest.useFakeTimers();
+    render(<CalendarScreen initialDateOverride={FIXED_DATE} />);
+
+    fireEvent.press(screen.getByText('Focus'));
+
+    const holdButton = screen.getByLabelText('Hold to return to calendar');
+    fireEvent(holdButton, 'pressIn');
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByLabelText('Idea dump input')).toBeNull();
+    jest.useRealTimers();
   });
 });
 

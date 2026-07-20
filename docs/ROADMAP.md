@@ -83,21 +83,29 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | M8.3 | not-started | Add analytics dashboards and operational alerts | Product and reliability telemetry available |
 | M8.4 | not-started | Finalize legal copy (privacy policy, terms, disclosures) | Store-compliant legal docs available |
 
-### M9 - Monetization Readiness
+### M9 - Final UI Fixes and Operability Fixes
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M9.1 | not-started | Configure subscription products for iOS and Android | Products testable in sandbox environments |
-| M9.2 | not-started | Build paywall UX and entitlement restoration flows | Purchase, restore, and cancel paths validated |
-| M9.3 | not-started | Validate regional pricing and trial strategy | Pricing matrix approved for launch markets |
+| M9.1 | not-started | Polish UI interactions and accessibility | All screens pass WCAG AA accessibility audit |
+| M9.2 | not-started | Fix operability edge cases and error recovery | Edge cases in critical flows handled gracefully |
+| M9.3 | not-started | Optimize app performance and startup time | App launch and transitions meet performance targets |
+| M9.4 | not-started | Run end-to-end user acceptance testing | UAT signoff from stakeholders |
 
-### M10 - Release and Store Deployment
+### M10 - Monetization Readiness
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M10.1 | not-started | Prepare release build pipelines and signing setup | Signed release candidates generated |
-| M10.2 | not-started | Complete App Store listing assets and metadata | Apple submission package ready |
-| M10.3 | not-started | Complete Google Play listing assets and metadata | Play submission package ready |
-| M10.4 | not-started | Run beta testing cycles (TestFlight/Internal Testing) | Critical launch blockers resolved |
-| M10.5 | not-started | Submit and publish to both stores | App live in both stores |
+| M10.1 | not-started | Configure subscription products for iOS and Android | Products testable in sandbox environments |
+| M10.2 | not-started | Build paywall UX and entitlement restoration flows | Purchase, restore, and cancel paths validated |
+| M10.3 | not-started | Validate regional pricing and trial strategy | Pricing matrix approved for launch markets |
+
+### M11 - Release and Store Deployment
+| Task ID | Status | Description | Exit Criteria |
+| --- | --- | --- | --- |
+| M11.1 | not-started | Prepare release build pipelines and signing setup | Signed release candidates generated |
+| M11.2 | not-started | Complete App Store listing assets and metadata | Apple submission package ready |
+| M11.3 | not-started | Complete Google Play listing assets and metadata | Play submission package ready |
+| M11.4 | not-started | Run beta testing cycles (TestFlight/Internal Testing) | Critical launch blockers resolved |
+| M11.5 | not-started | Submit and publish to both stores | App live in both stores |
 
 ## Dependency Order Summary
 1. M0 Product definition
@@ -107,8 +115,9 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 5. M6 Integrations and interoperability
 6. M7 Premium and AI layer
 7. M8 Quality, security, compliance
-8. M9 Monetization readiness
-9. M10 Store release
+8. M9 Final UI and operability fixes
+9. M10 Monetization readiness
+10. M11 Store release
 
 ## Validation Gates Per Milestone
 - Functional gate: Acceptance criteria met for milestone exit.

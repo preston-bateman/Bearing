@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AppModal } from '../ui/AppModal';
 import { colors, spacing, typography } from '../../design/tokens';
 import { CreateEventInput } from '../../features/calendar/calendarTypes';
 
+type AddEventInitialValues = Partial<Pick<CreateEventInput, 'title' | 'description' | 'goalId' | 'stepId'>>;
+
 type AddEventModalProps = {
   visible: boolean;
   initialDate: Date;
+  modalTitle?: string;
+  initialValues?: AddEventInitialValues;
   onClose: () => void;
   onSave: (input: CreateEventInput) => Promise<void>;
 };
@@ -54,17 +58,49 @@ function parseDateTime(datePart: string, timePart: string): Date | null {
   return isNaN(result.getTime()) ? null : result;
 }
 
-export function AddEventModal({ visible, initialDate, onClose, onSave }: AddEventModalProps) {
+function buildInitialFormState(initialDate: Date, initialValues?: AddEventInitialValues) {
   const defaultStart = roundUpToNextHour(initialDate);
   const defaultEnd = new Date(defaultStart.getTime() + 3_600_000);
 
+  return {
+    title: initialValues?.title ?? '',
+    description: initialValues?.description ?? '',
+    datePart: toDateString(initialDate),
+    startTime: toTimeString(defaultStart),
+    endTime: toTimeString(defaultEnd),
+  };
+}
+
+export function AddEventModal({
+  visible,
+  initialDate,
+  modalTitle = 'Add Event',
+  initialValues,
+  onClose,
+  onSave,
+}: AddEventModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [datePart, setDatePart] = useState(toDateString(initialDate));
-  const [startTime, setStartTime] = useState(toTimeString(defaultStart));
-  const [endTime, setEndTime] = useState(toTimeString(defaultEnd));
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    const nextState = buildInitialFormState(initialDate, initialValues);
+    setTitle(nextState.title);
+    setDescription(nextState.description);
+    setDatePart(nextState.datePart);
+    setStartTime(nextState.startTime);
+    setEndTime(nextState.endTime);
+    setError(null);
+    setSaving(false);
+  }, [initialDate, initialValues, visible]);
 
   async function handleSave(): Promise<void> {
     setError(null);
@@ -100,11 +136,9 @@ export function AddEventModal({ visible, initialDate, onClose, onSave }: AddEven
         startAt,
         endAt,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        goalId: initialValues?.goalId ?? null,
+        stepId: initialValues?.stepId ?? null,
       });
-      // Reset form on success
-      setTitle('');
-      setDescription('');
-      setError(null);
       onClose();
     } catch {
       setError('Failed to save event. Please try again.');
@@ -114,14 +148,12 @@ export function AddEventModal({ visible, initialDate, onClose, onSave }: AddEven
   }
 
   function handleClose(): void {
-    setTitle('');
-    setDescription('');
     setError(null);
     onClose();
   }
 
   return (
-    <AppModal visible={visible} title="Add Event" onClose={handleClose}>
+    <AppModal visible={visible} title={modalTitle} onClose={handleClose}>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Title</Text>
         <TextInput

@@ -1,0 +1,769 @@
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { AppCard } from '../ui/AppCard';
+import { AppModal } from '../ui/AppModal';
+import { colors, radii, spacing, typography } from '../../design/tokens';
+import { CreateGoalInput, CreateGoalStepInput } from '../../features/goals/goalTypes';
+
+type CreateGoalModalProps = {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (input: CreateGoalInput) => Promise<void>;
+};
+
+type GoalDateField = 'month' | 'day' | 'year';
+type GoalDateParts = {
+  month: number;
+  day: number;
+  year: number;
+};
+type DatePickerOption = {
+  value: number;
+  label: string;
+};
+type DraftGoalStep = CreateGoalStepInput & {
+  id: string;
+  dateParts: GoalDateParts;
+  activeDateField: GoalDateField | null;
+};
+
+const WIZARD_TITLES = [
+  'SMART Setup',
+  'Goal Details',
+  'Target Date',
+  'AI Planning',
+  'Steps',
+] as const;
+
+const MONTH_OPTIONS = [
+  { value: 1, label: '01 - Jan' },
+  { value: 2, label: '02 - Feb' },
+  { value: 3, label: '03 - Mar' },
+  { value: 4, label: '04 - Apr' },
+  { value: 5, label: '05 - May' },
+  { value: 6, label: '06 - Jun' },
+  { value: 7, label: '07 - Jul' },
+  { value: 8, label: '08 - Aug' },
+  { value: 9, label: '09 - Sep' },
+  { value: 10, label: '10 - Oct' },
+  { value: 11, label: '11 - Nov' },
+  { value: 12, label: '12 - Dec' },
+] as const;
+
+const YEAR_OPTION_COUNT = 51;
+
+function makeEmptyDraftStep(index: number, baseDate: Date): DraftGoalStep {
+  const defaultDateParts = buildDefaultGoalDateParts(baseDate);
+
+  return {
+    id: `draft-step-${index}`,
+    title: '',
+    description: '',
+    starter: '',
+    estimatedFinishDate: getGoalDateFromParts(defaultDateParts),
+    dateParts: defaultDateParts,
+    activeDateField: null,
+  };
+}
+
+function addDays(date: Date, days: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function formatTwoDigits(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function buildDefaultGoalDateParts(baseDate: Date): GoalDateParts {
+  const tomorrow = addDays(baseDate, 1);
+  return {
+    month: tomorrow.getMonth() + 1,
+    day: tomorrow.getDate(),
+    year: tomorrow.getFullYear(),
+  };
+}
+
+function formatGoalDateParts(parts: GoalDateParts): string {
+  return `${formatTwoDigits(parts.month)}-${formatTwoDigits(parts.day)}-${parts.year}`;
+}
+
+function getGoalDateFromParts(parts: GoalDateParts): Date {
+  return new Date(parts.year, parts.month - 1, parts.day);
+}
+
+function getDayOptions(month: number, year: number): number[] {
+  const maxDay = new Date(year, month, 0).getDate();
+  return Array.from({ length: maxDay }, (_, index) => index + 1);
+}
+
+function isFutureDate(date: Date, today: Date): boolean {
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return dateOnly.getTime() > todayOnly.getTime();
+}
+
+type WizardDatePickerProps = {
+  title: string;
+  summaryLabel: string;
+  helperText: string;
+  accessibilityPrefix: string;
+  dateParts: GoalDateParts;
+  activeField: GoalDateField | null;
+  optionsByField: Record<GoalDateField, DatePickerOption[]>;
+  onToggleField: (field: GoalDateField) => void;
+  onSelectField: (field: GoalDateField, value: number) => void;
+};
+
+function WizardDatePicker({
+  title,
+  summaryLabel,
+  helperText,
+  accessibilityPrefix,
+  dateParts,
+  activeField,
+  optionsByField,
+  onToggleField,
+  onSelectField,
+}: WizardDatePickerProps) {
+  const activeOptions = activeField ? optionsByField[activeField] : [];
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>{title}</Text>
+        <Text style={styles.dateSummary}>{summaryLabel}</Text>
+        <Text style={styles.dateHint}>{helperText}</Text>
+      </View>
+
+      <View style={styles.dateFieldRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${accessibilityPrefix} month dropdown`}
+          onPress={() => onToggleField('month')}
+          style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.buttonPressed : null]}
+        >
+          <Text style={styles.dateFieldLabel}>Month</Text>
+          <Text style={styles.dateFieldValue}>{formatTwoDigits(dateParts.month)}</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${accessibilityPrefix} day dropdown`}
+          onPress={() => onToggleField('day')}
+          style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.buttonPressed : null]}
+        >
+          <Text style={styles.dateFieldLabel}>Day</Text>
+          <Text style={styles.dateFieldValue}>{formatTwoDigits(dateParts.day)}</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${accessibilityPrefix} year dropdown`}
+          onPress={() => onToggleField('year')}
+          style={({ pressed }) => [styles.dateFieldButton, pressed ? styles.buttonPressed : null]}
+        >
+          <Text style={styles.dateFieldLabel}>Year</Text>
+          <Text style={styles.dateFieldValue}>{dateParts.year}</Text>
+        </Pressable>
+      </View>
+
+      {activeField ? (
+        <AppCard style={styles.dropdownCard}>
+          <Text style={styles.dropdownTitle}>
+            {activeField === 'month' ? 'Select month' : activeField === 'day' ? 'Select day' : 'Select year'}
+          </Text>
+          <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+            {activeOptions.map((option) => (
+              <Pressable
+                key={`${accessibilityPrefix}-${activeField}-${option.value}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${accessibilityPrefix} ${activeField} ${option.label}`}
+                onPress={() => onSelectField(activeField, option.value)}
+                style={({ pressed }) => [styles.dropdownOption, pressed ? styles.buttonPressed : null]}
+              >
+                <Text style={styles.dropdownOptionText}>{option.label}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </AppCard>
+      ) : null}
+    </View>
+  );
+}
+
+export function CreateGoalModal({ visible, onClose, onSave }: CreateGoalModalProps) {
+  const today = useMemo(() => new Date(), []);
+  const [wizardIndex, setWizardIndex] = useState(0);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [goalDateParts, setGoalDateParts] = useState<GoalDateParts>(() => buildDefaultGoalDateParts(today));
+  const [activeGoalDateField, setActiveGoalDateField] = useState<GoalDateField | null>(null);
+  const [draftSteps, setDraftSteps] = useState<DraftGoalStep[]>([makeEmptyDraftStep(1, today)]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const canGoBack = wizardIndex > 0;
+  const wizardLabel = useMemo(
+    () => `Step ${wizardIndex + 1} of ${WIZARD_TITLES.length}: ${WIZARD_TITLES[wizardIndex]}`,
+    [wizardIndex],
+  );
+
+  function resetForm(): void {
+    setWizardIndex(0);
+    setTitle('');
+    setDescription('');
+    setGoalDateParts(buildDefaultGoalDateParts(today));
+    setActiveGoalDateField(null);
+    setDraftSteps([makeEmptyDraftStep(1, today)]);
+    setSaving(false);
+    setError(null);
+  }
+
+  function handleClose(): void {
+    resetForm();
+    onClose();
+  }
+
+  function updateDraftStep(id: string, field: keyof DraftGoalStep, value: string): void {
+    setDraftSteps((current) =>
+      current.map((step) => {
+        if (step.id !== id) {
+          return step;
+        }
+
+        return { ...step, [field]: value };
+      }),
+    );
+  }
+
+  function toggleDraftStepDateField(id: string, field: GoalDateField): void {
+    setDraftSteps((current) =>
+      current.map((step) => {
+        if (step.id !== id) {
+          return {
+            ...step,
+            activeDateField: null,
+          };
+        }
+
+        return {
+          ...step,
+          activeDateField: step.activeDateField === field ? null : field,
+        };
+      }),
+    );
+    setError(null);
+  }
+
+  function updateDraftStepDateField(id: string, field: GoalDateField, value: number): void {
+    setDraftSteps((current) =>
+      current.map((step) => {
+        if (step.id !== id) {
+          return {
+            ...step,
+            activeDateField: null,
+          };
+        }
+
+        const nextDateParts = { ...step.dateParts, [field]: value };
+        const validDays = getDayOptions(nextDateParts.month, nextDateParts.year);
+
+        if (!validDays.includes(nextDateParts.day)) {
+          nextDateParts.day = validDays[validDays.length - 1];
+        }
+
+        return {
+          ...step,
+          dateParts: nextDateParts,
+          estimatedFinishDate: getGoalDateFromParts(nextDateParts),
+          activeDateField: null,
+        };
+      }),
+    );
+    setError(null);
+  }
+
+  function updateGoalDateField(field: GoalDateField, value: number): void {
+    setGoalDateParts((current) => {
+      const next = { ...current, [field]: value };
+      const validDays = getDayOptions(next.month, next.year);
+
+      if (!validDays.includes(next.day)) {
+        next.day = validDays[validDays.length - 1];
+      }
+
+      return next;
+    });
+    setActiveGoalDateField(null);
+    setError(null);
+  }
+
+  function validateCurrentStep(): boolean {
+    setError(null);
+
+    if (wizardIndex === 1) {
+      if (!title.trim()) {
+        setError('Goal name is required.');
+        return false;
+      }
+    }
+
+    if (wizardIndex === 2) {
+      const selectedDate = getGoalDateFromParts(goalDateParts);
+      if (!isFutureDate(selectedDate, today)) {
+        setError('Estimated completion date must be in the future.');
+        return false;
+      }
+    }
+
+    if (wizardIndex === 4) {
+      const filledSteps = draftSteps.filter((step) => step.title.trim());
+      if (filledSteps.length === 0) {
+        setError('Add at least one step with a name.');
+        return false;
+      }
+
+      const invalidStepIndex = filledSteps.findIndex(
+        (step) => !step.estimatedFinishDate || !isFutureDate(step.estimatedFinishDate, today),
+      );
+
+      if (invalidStepIndex !== -1) {
+        setError(`Step ${invalidStepIndex + 1} estimated finish date must be in the future.`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function handleNext(): void {
+    if (!validateCurrentStep()) {
+      return;
+    }
+
+    setWizardIndex((current) => Math.min(current + 1, WIZARD_TITLES.length - 1));
+  }
+
+  async function handleSave(): Promise<void> {
+    if (!validateCurrentStep()) {
+      return;
+    }
+
+    const parsedDate = getGoalDateFromParts(goalDateParts);
+    if (!isFutureDate(parsedDate, today)) {
+      setError('Estimated completion date must be in the future.');
+      return;
+    }
+
+    setActiveGoalDateField(null);
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onSave({
+        title: title.trim(),
+        description: description.trim(),
+        smartMeta: {
+          specific: '',
+          measurable: '',
+          achievable: '',
+          relevant: '',
+          timeBound: '',
+        },
+        estimatedCompletionDate: parsedDate,
+        isAiAssisted: false,
+        steps: draftSteps
+          .filter((step) => step.title.trim())
+          .map((step) => ({
+            title: step.title.trim(),
+            description: step.description.trim(),
+            starter: step.starter.trim(),
+            estimatedFinishDate: step.estimatedFinishDate,
+          })),
+      });
+      handleClose();
+    } catch {
+      setError('Failed to save goal. Please try again.');
+      setSaving(false);
+    }
+  }
+
+  const yearOptions = useMemo(
+    () => Array.from({ length: YEAR_OPTION_COUNT }, (_, index) => today.getFullYear() + index),
+    [today],
+  );
+  const dayOptions = useMemo(
+    () => getDayOptions(goalDateParts.month, goalDateParts.year),
+    [goalDateParts.month, goalDateParts.year],
+  );
+
+  return (
+    <AppModal visible={visible} title="Create Goal" onClose={handleClose}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.stepLabel}>{wizardLabel}</Text>
+
+        {wizardIndex === 0 ? (
+          <AppCard style={styles.card}>
+            <Text style={styles.cardTitle}>Build a SMART goal before you plan it.</Text>
+            <Text style={styles.cardBody}>
+              Specific, measurable, achievable, relevant, and time-bound goals make the next step clear.
+            </Text>
+          </AppCard>
+        ) : null}
+
+        {wizardIndex === 1 ? (
+          <View style={styles.section}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Goal name</Text>
+              <TextInput
+                accessibilityLabel="Goal name"
+                value={title}
+                onChangeText={setTitle}
+                style={styles.input}
+                placeholder="Run my first 10k"
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                accessibilityLabel="Goal description"
+                value={description}
+                onChangeText={setDescription}
+                style={[styles.input, styles.textArea]}
+                multiline
+                placeholder="Why this goal matters"
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <AppCard style={styles.exampleCard}>
+              <Text style={styles.exampleLabel}>Simple SMART example</Text>
+              <Text style={styles.exampleText}>
+                Good goal: Walk 30 minutes after work, 4 days a week, for the next 6 weeks.
+              </Text>
+            </AppCard>
+          </View>
+        ) : null}
+
+        {wizardIndex === 3 ? (
+          <AppCard style={styles.card}>
+            <Text style={styles.cardTitle}>AI planning is coming soon.</Text>
+            <Text style={styles.cardBody}>
+              You will be able to generate milestones and steps here once premium AI planning ships.
+            </Text>
+            <View style={styles.disabledBadge}>
+              <Text style={styles.disabledBadgeText}>Coming Soon</Text>
+            </View>
+          </AppCard>
+        ) : null}
+
+        {wizardIndex === 2 ? (
+          <WizardDatePicker
+            title="Estimated completion date"
+            summaryLabel={`Selected date: ${formatGoalDateParts(goalDateParts)}`}
+            helperText="Format: MM-DD-YYYY"
+            accessibilityPrefix="goal target"
+            dateParts={goalDateParts}
+            activeField={activeGoalDateField}
+            optionsByField={{
+              month: MONTH_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+              day: dayOptions.map((day) => ({ value: day, label: formatTwoDigits(day) })),
+              year: yearOptions.map((year) => ({ value: year, label: String(year) })),
+            }}
+            onToggleField={(field) =>
+              setActiveGoalDateField((current) => (current === field ? null : field))
+            }
+            onSelectField={updateGoalDateField}
+          />
+        ) : null}
+
+        {wizardIndex === 4 ? (
+          <View style={styles.section}>
+            {draftSteps.map((step, index) => (
+              <AppCard key={step.id} style={styles.card}>
+                <Text style={styles.cardTitle}>Step {index + 1}</Text>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Step name</Text>
+                  <TextInput
+                    accessibilityLabel={`Draft step ${index + 1} name`}
+                    value={step.title}
+                    onChangeText={(value) => updateDraftStep(step.id, 'title', value)}
+                    style={styles.input}
+                    placeholder="Add the next action"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Description</Text>
+                  <TextInput
+                    accessibilityLabel={`Draft step ${index + 1} description`}
+                    value={step.description}
+                    onChangeText={(value) => updateDraftStep(step.id, 'description', value)}
+                    style={[styles.input, styles.textArea]}
+                    multiline
+                    placeholder="Optional details"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Starter</Text>
+                  <TextInput
+                    accessibilityLabel={`Draft step ${index + 1} starter`}
+                    value={step.starter}
+                    onChangeText={(value) => updateDraftStep(step.id, 'starter', value)}
+                    style={styles.input}
+                    placeholder="Optional starter cue"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+
+                <WizardDatePicker
+                  title="Estimated finish date"
+                  summaryLabel={`Selected date: ${formatGoalDateParts(step.dateParts)}`}
+                  helperText="Format: MM-DD-YYYY"
+                  accessibilityPrefix={`draft step ${index + 1}`}
+                  dateParts={step.dateParts}
+                  activeField={step.activeDateField}
+                  optionsByField={{
+                    month: MONTH_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+                    day: getDayOptions(step.dateParts.month, step.dateParts.year).map((day) => ({
+                      value: day,
+                      label: formatTwoDigits(day),
+                    })),
+                    year: yearOptions.map((year) => ({ value: year, label: String(year) })),
+                  }}
+                  onToggleField={(field) => toggleDraftStepDateField(step.id, field)}
+                  onSelectField={(field, value) => updateDraftStepDateField(step.id, field, value)}
+                />
+              </AppCard>
+            ))}
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add another draft step"
+              onPress={() =>
+                setDraftSteps((current) => [...current, makeEmptyDraftStep(current.length + 1, today)])
+              }
+              style={({ pressed }) => [styles.secondaryButton, pressed ? styles.buttonPressed : null]}
+            >
+              <Text style={styles.secondaryButtonText}>Add Another Step</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <View style={styles.actionRow}>
+          {canGoBack ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              onPress={() => setWizardIndex((current) => Math.max(0, current - 1))}
+              style={({ pressed }) => [styles.secondaryButton, pressed ? styles.buttonPressed : null]}
+            >
+              <Text style={styles.secondaryButtonText}>Back</Text>
+            </Pressable>
+          ) : null}
+
+          {wizardIndex < WIZARD_TITLES.length - 1 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Continue"
+              onPress={handleNext}
+              style={({ pressed }) => [styles.primaryButton, pressed ? styles.buttonPressed : null]}
+            >
+              <Text style={styles.primaryButtonText}>Continue</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Save goal"
+              onPress={handleSave}
+              disabled={saving}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && !saving ? styles.buttonPressed : null,
+                saving ? styles.buttonDisabled : null,
+              ]}
+            >
+              <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save Goal'}</Text>
+            </Pressable>
+          )}
+        </View>
+      </ScrollView>
+    </AppModal>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    gap: spacing.lg,
+  },
+  section: {
+    gap: spacing.lg,
+  },
+  stepLabel: {
+    ...typography.label,
+    color: colors.brand,
+  },
+  card: {
+    gap: spacing.md,
+  },
+  exampleCard: {
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+  },
+  cardTitle: {
+    ...typography.button,
+    color: colors.text,
+  },
+  cardBody: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  exampleLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  exampleText: {
+    ...typography.helper,
+    color: colors.textPrimary,
+    lineHeight: 20,
+  },
+  disabledBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  disabledBadgeText: {
+    ...typography.helper,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  fieldGroup: {
+    gap: spacing.xs,
+  },
+  dateFieldRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  dateFieldButton: {
+    flex: 1,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  dateFieldLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  dateFieldValue: {
+    ...typography.body,
+    color: colors.text,
+  },
+  dateSummary: {
+    ...typography.body,
+    color: colors.text,
+  },
+  dateHint: {
+    ...typography.helper,
+    color: colors.textSecondary,
+  },
+  dropdownCard: {
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  dropdownTitle: {
+    ...typography.helper,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  dropdownList: {
+    maxHeight: 176,
+  },
+  dropdownOption: {
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  dropdownOptionText: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  label: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  input: {
+    ...typography.body,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  textArea: {
+    minHeight: 96,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    ...typography.helper,
+    color: colors.dangerText,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'flex-end',
+  },
+  primaryButton: {
+    flex: 1,
+    borderRadius: radii.md,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  primaryButtonText: {
+    ...typography.button,
+    color: colors.surface,
+  },
+  secondaryButtonText: {
+    ...typography.button,
+    color: colors.textPrimary,
+  },
+  buttonPressed: {
+    opacity: 0.86,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+});

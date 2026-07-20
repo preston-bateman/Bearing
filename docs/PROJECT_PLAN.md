@@ -28,27 +28,86 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | M1.3 | completed | Set up linting, test runner, and baseline CI checks | ESLint + Prettier config + Jest smoke test + PR CI workflow added |
 | M1.4 | completed | Implement bottom tab navigation shell and screen placeholders | Authenticated tab shell implemented; manual iOS/Android tap-through validation confirmed |
 
-### M2 - Day Management Core
+### M2 - Design System and UX Foundation
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
-| M2.1 | completed | Create daily schedule/task data model and state flows | Reuse repository patterns; shared design tokens committed and applied to the current UI shell |
-| M2.2 | completed | Implement daily task creation and completion flows | Reusable UI primitives now support the day-management shell and future task flows |
-| M2.3 | completed | Add daily overview screen and progress indicators | Calendar daily overview finalized with event-focused loading, empty, error, completed/past interaction states; progress tracking intentionally deferred to Goals |
+| M2.1 | completed | Define visual language, typography, spacing, and component tokens | Shared design tokens committed and applied to the current UI shell |
+| M2.2 | completed | Build reusable primitives (cards, modals, FAB, list items, headers) | Reusable UI primitives now support Calendar, Goals, Notes, and Profile surfaces |
+| M2.3 | completed | Define interaction states (loading, empty, error, completed/past) | Calendar state patterns implemented and progress tracking intentionally deferred to Goals |
 
 ### M3 - Calendar and Focus Mode
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
 | M3.1 | completed | Build calendar screen interaction model | Day view (hourly timeline) + month view (horizontally scrollable grid); no week view |
 | M3.2 | completed | Add calendar event CRUD baseline | Firestore-backed; fields aligned to DATA_MODEL_SPEC; service layer + React hooks + modals |
-| M3.3 | not-started | Implement Idea Dump capture to Notes pipeline | |
-| M3.4 | not-started | Implement Focus Mode UI and active event timer | |
+| M3.3 | completed | Implement Idea Dump capture to Notes pipeline | Notes can be created only from Focus Mode Idea Dump or the Notes screen FAB; Firestore connectivity verified live on 2026-07-20 |
+| M3.4 | completed | Implement Focus Mode UI and active event timer | Calendar exposes two bottom-right FABs: Add Event and Focus Mode; Focus Mode exits via 3-second press-and-hold control |
 
 ### M4 - Life Goals Core
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
-| M4.1 | not-started | Create life-goal model and milestone tracking | Avoid speculative fields |
-| M4.2 | not-started | Implement goal creation/editing and timeline views | Preserve public API stability |
-| M4.3 | not-started | Add goal progress summaries and rollups | Include edge-case validation |
+| M4.1 | in-progress | Implement goals list cards with required fields | Goal cards must show title, estimated completion date, and derived next step |
+| M4.2 | not-started | Build SMART onboarding + goal creation wizard (manual path) | Keep AI planning visible as disabled coming-soon UI |
+| M4.3 | not-started | Implement Goal Details modal with edit capabilities | Include manual complete action in edit mode |
+| M4.4 | not-started | Implement step list interactions (add, complete, reorder) | Drag-and-drop reorder required; goal auto-completes when all steps are done |
+| M4.5 | not-started | Implement Step Details modal with schedule action | Schedule flow must prefill event title plus goal/step linkage |
+
+### M5 - Notes and Profile
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M5.1 | not-started | Build notes list and note CRUD | Notes can be created, edited, deleted |
+| M5.2 | not-started | Merge Idea Dump and standard notes flows | Captured notes are discoverable and editable |
+| M5.3 | not-started | Build profile account settings and password reset flow | Account actions verified end-to-end |
+| M5.4 | not-started | Add tips/life wisdom alert and sound settings | Profile utilities functional and saved |
+
+### M6 - Calendar Integrations and ICS Interop
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M6.1 | not-started | Integrate Google Calendar connectivity | Read/write sync works for connected account |
+| M6.2 | not-started | Integrate Microsoft calendar connectivity | Read/write sync works for connected account |
+| M6.3 | not-started | Integrate Apple calendar pathway and constraints handling | Compatible import/export path validated |
+| M6.4 | not-started | Add .ics import/export/share support | .ics round-trip validated with sample events |
+| M6.5 | not-started | Build conflict resolution and sync diagnostics UI | Sync errors are actionable for users |
+
+### M7 - Premium and AI Goal Assistant
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M7.1 | not-started | Implement premium entitlement model and feature gates | Premium gates enforced client and server side |
+| M7.2 | not-started | Build AI-assisted goal planning service integration | AI returns editable milestones and steps |
+| M7.3 | not-started | Add AI safety, fallback, and failure UX | Users receive clear recovery paths on failure |
+| M7.4 | not-started | Instrument premium funnel from upgrade to activation | Conversion analytics captured end-to-end |
+
+### M8 - Quality, Security, and Compliance
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M8.1 | not-started | Expand automated tests for critical user journeys | Core flows covered by stable tests |
+| M8.2 | not-started | Perform security hardening and secret management audit | No secrets exposed and auth flows validated |
+| M8.3 | not-started | Add analytics dashboards and operational alerts | Product and reliability telemetry available |
+| M8.4 | not-started | Finalize legal copy (privacy policy, terms, disclosures) | Store-compliant legal docs available |
+
+### M9 - Final UI Fixes and Operability Fixes
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M9.1 | not-started | Polish UI interactions and accessibility | All screens pass WCAG AA accessibility audit |
+| M9.2 | not-started | Fix operability edge cases and error recovery | Edge cases in critical flows handled gracefully |
+| M9.3 | not-started | Optimize app performance and startup time | App launch and transitions meet performance targets |
+| M9.4 | not-started | Run end-to-end user acceptance testing | UAT signoff from stakeholders |
+
+### M10 - Monetization Readiness
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M10.1 | not-started | Configure subscription products for iOS and Android | Products testable in sandbox environments |
+| M10.2 | not-started | Build paywall UX and entitlement restoration flows | Purchase, restore, and cancel paths validated |
+| M10.3 | not-started | Validate regional pricing and trial strategy | Pricing matrix approved for launch markets |
+
+### M11 - Release and Store Deployment
+| Task ID | Status | Description | Notes |
+| --- | --- | --- | --- |
+| M11.1 | not-started | Prepare release build pipelines and signing setup | Signed release candidates generated |
+| M11.2 | not-started | Complete App Store listing assets and metadata | Apple submission package ready |
+| M11.3 | not-started | Complete Google Play listing assets and metadata | Play submission package ready |
+| M11.4 | not-started | Run beta testing cycles (TestFlight/Internal Testing) | Critical launch blockers resolved |
+| M11.5 | not-started | Submit and publish to both stores | App live in both stores |
 
 ## Update Rules
 - Read this file before starting a task.
@@ -84,3 +143,9 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-17 | M3.1 | Calendar screen interaction model implementation started | in-progress | Day view (hourly timeline) + month view (horizontally scrollable grid) |
 | 2026-07-17 | M3.1 | Calendar screen interaction model implementation and validation complete | completed | npm test (4 suites, 19 tests), npx tsc --noEmit, npm run lint all passed |
 | 2026-07-17 | M3.2 | Calendar event CRUD baseline implementation and validation complete | completed | firebaseEvents service + useCalendarEvents hook + AddEventModal + EventDetailModal; npm test (19 tests), npx tsc, npm run lint passed |
+| 2026-07-20 | M3.2 | Live Firestore connectivity probe executed | completed | Anonymous auth plus Firestore event create/query/delete and note create/query/delete succeeded against project `bearing-b848e` |
+| 2026-07-20 | M3.3 | Idea Dump to Notes implementation started | in-progress | Scope clarified: dual Calendar FABs, Focus Mode hold-to-exit, note creation limited to Focus Mode and Notes screen FAB |
+| 2026-07-20 | M3.4 | Focus Mode implementation started | in-progress | Implementing full-screen Focus Mode overlay with active-event countdown and 3-second press-and-hold exit |
+| 2026-07-20 | M3.3 | Idea Dump to Notes implementation and validation complete | completed | Notes Firestore service + Notes screen create/list flow + Focus Mode Idea Dump save path; npm test, npx tsc --noEmit, and npm run lint passed |
+| 2026-07-20 | M3.4 | Focus Mode implementation and validation complete | completed | Dual Calendar FABs, full-screen Focus Mode, active-event countdown, and 3-second hold-to-exit behavior verified by tests; npm test, npx tsc --noEmit, and npm run lint passed |
+| 2026-07-20 | M4.1 | Goals milestone implementation started | in-progress | Roadmap-aligned scope approved: derived next step, disabled AI branch, drag-and-drop reorder, prefilled step scheduling, auto/manual goal completion |

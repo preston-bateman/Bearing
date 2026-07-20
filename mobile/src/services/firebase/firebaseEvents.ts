@@ -106,6 +106,31 @@ export function subscribeToEventsByDateRange(
   );
 }
 
+export function subscribeToEventsByStepId(
+  userId: string,
+  stepId: string,
+  onNext: (events: CalendarEvent[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  const db = getFirebaseFirestore();
+  const q = query(
+    collection(db, 'events'),
+    where('userId', '==', userId),
+    where('stepId', '==', stepId),
+    orderBy('startAt', 'asc'),
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onNext(snapshot.docs.map(docToCalendarEvent));
+    },
+    (firestoreError) => {
+      onError(new Error('Failed to load linked step events.', { cause: firestoreError }));
+    },
+  );
+}
+
 /**
  * Create a new local calendar event for the given user.
  * @returns The Firestore document ID of the newly created event.
@@ -124,8 +149,8 @@ export async function createEvent(userId: string, input: CreateEventInput): Prom
     source: 'local',
     externalEventId: null,
     calendarConnectionId: null,
-    goalId: null,
-    stepId: null,
+    goalId: input.goalId ?? null,
+    stepId: input.stepId ?? null,
     status: 'scheduled',
     createdAt: now,
     updatedAt: now,

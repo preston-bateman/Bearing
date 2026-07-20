@@ -7,10 +7,19 @@ type AppModalProps = {
   visible: boolean;
   title: string;
   onClose: () => void;
+  closeLabel?: string;
+  headerAccessory?: ReactNode;
   children: ReactNode;
 };
 
-export function AppModal({ visible, title, onClose, children }: AppModalProps) {
+export function AppModal({
+  visible,
+  title,
+  onClose,
+  closeLabel = 'Close',
+  headerAccessory,
+  children,
+}: AppModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -18,9 +27,12 @@ export function AppModal({ visible, title, onClose, children }: AppModalProps) {
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              {headerAccessory}
+              <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>{closeLabel}</Text>
+              </Pressable>
+            </View>
           </View>
           <View style={styles.body}>{children}</View>
         </View>
@@ -53,9 +65,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   title: {
     ...typography.screenTitle,
     color: colors.text,
+    flex: 1,
   },
   closeButton: {
     borderRadius: componentTokens.button.borderRadius,

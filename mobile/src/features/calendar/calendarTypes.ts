@@ -25,6 +25,8 @@ export type CreateEventInput = {
   startAt: Date;
   endAt: Date;
   timezone: string;
+  goalId?: string | null;
+  stepId?: string | null;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput & { status: EventStatus }>;

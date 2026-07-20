@@ -8,6 +8,7 @@ import { HourlyTimeline } from '../components/calendar/HourlyTimeline';
 import { MonthGrid, MONTH_NAMES } from '../components/calendar/MonthGrid';
 import { AddEventModal } from '../components/calendar/AddEventModal';
 import { EventDetailModal } from '../components/calendar/EventDetailModal';
+import { FocusModeOverlay } from '../components/calendar/FocusModeOverlay';
 import { colors, layout, spacing, typography } from '../design/tokens';
 import {
   CalendarEvent,
@@ -16,6 +17,8 @@ import {
   ViewMode,
 } from '../features/calendar/calendarTypes';
 import { useCalendarEvents } from '../features/calendar/useCalendarEvents';
+import { CreateNoteInput as CreateNotePayload } from '../features/notes/noteTypes';
+import { useNotes } from '../features/notes/useNotes';
 
 // ---------------------------------------------------------------------------
 // Month carousel data
@@ -34,6 +37,14 @@ function buildMonthList(baseDate: Date): MonthItem[] {
     items.push({ year: d.getFullYear(), month: d.getMonth() });
   }
   return items;
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -61,15 +72,21 @@ export function CalendarScreen({
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
   const [addEventVisible, setAddEventVisible] = useState(false);
+  const [focusModeVisible, setFocusModeVisible] = useState(false);
   const { width: screenWidth } = useWindowDimensions();
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
 
   // Real data from hook (test overrides only when eventsOverride provided)
   const { events: realEvents, eventsForDate, uiState: realUiState, createEvent, deleteEvent } =
     useCalendarEvents(selectedDate);
+  const { createNote } = useNotes();
 
   const uiState: CalendarUiState = stateOverride ?? realUiState;
-  const dayEvents: CalendarEvent[] =
-    eventsOverride ?? eventsForDate(selectedDate);
+  const calendarEvents = eventsOverride ?? realEvents;
+  const dayEvents: CalendarEvent[] = eventsOverride
+    ? calendarEvents.filter((event) => isSameCalendarDay(event.startAt, selectedDate))
+    : eventsForDate(selectedDate);
 
   // Month carousel
   const baseDate = initialDateOverride ?? new Date();
@@ -84,6 +101,11 @@ export function CalendarScreen({
 
   const flatListRef = useRef<FlatList<MonthItem>>(null);
   const [visibleMonthIndex, setVisibleMonthIndex] = useState(initialMonthIndex);
+  const today = new Date();
+  const focusEvents =
+    year === today.getFullYear() && month === today.getMonth()
+      ? calendarEvents.filter((event) => isSameCalendarDay(event.startAt, today))
+      : [];
 
   const handleViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: { index: number | null }[] }) => {
@@ -147,8 +169,21 @@ export function CalendarScreen({
     setAddEventVisible(true);
   }
 
+  function handlePressFocusMode(): void {
+    setFocusModeVisible(true);
+  }
+
   function handlePressEvent(event: CalendarEvent): void {
     setActiveEvent(event);
+  }
+
+  async function handleSaveIdeaDump(input: CreateNotePayload): Promise<void> {
+    try {
+      await createNote(input);
+    } catch (error) {
+      console.error('Failed to save Idea Dump:', error);
+      throw error;
+    }
   }
 
   const visibleMonth = monthList[visibleMonthIndex];
@@ -239,9 +274,15 @@ export function CalendarScreen({
       {/* Floating action button */}
       <View style={styles.fabContainer}>
         <FloatingActionButton
-          label="Add Event"
+          label="Focus"
+          labelColor="#153748"
+          onPress={handlePressFocusMode}
+          style={styles.secondaryFab}
+        />
+        <FloatingActionButton
           onPress={handlePressAddEvent}
           disabled={uiState === 'loading'}
+          style={styles.primaryFab}
         />
       </View>
 
@@ -253,6 +294,12 @@ export function CalendarScreen({
         onSave={handleAddEvent}
       />
       <EventDetailModal event={activeEvent} onClose={() => setActiveEvent(null)} onDelete={handleDeleteEvent} />
+      <FocusModeOverlay
+        visible={focusModeVisible}
+        events={focusEvents}
+        onClose={() => setFocusModeVisible(false)}
+        onSaveIdeaDump={handleSaveIdeaDump}
+      />
     </View>
   );
 }
@@ -296,5 +343,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: layout.pagePaddingVertical,
     right: layout.pagePaddingHorizontal,
+    alignItems: 'flex-end',
+    gap: spacing.md,
+  },
+  primaryFab: {
+    alignSelf: 'flex-end',
+  },
+  secondaryFab: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

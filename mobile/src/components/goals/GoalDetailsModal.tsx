@@ -1,0 +1,361 @@
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { AppCard } from '../ui/AppCard';
+import { AppModal } from '../ui/AppModal';
+import { colors, radii, spacing, typography } from '../../design/tokens';
+import { GoalStepRecord, GoalWithSteps } from '../../features/goals/goalTypes';
+import { DraggableStepList } from './DraggableStepList';
+
+type GoalDetailsModalProps = {
+  goal: GoalWithSteps | null;
+  visible: boolean;
+  onClose: () => void;
+  onSaveGoal: (goalId: string, fields: { title: string; description: string; estimatedCompletionDate: Date }) => Promise<void>;
+  onMarkGoalCompleted: (goalId: string) => Promise<void>;
+  onAddStep: () => void;
+  onOpenStep: (step: GoalStepRecord) => void;
+  onToggleStepStatus: (step: GoalStepRecord) => Promise<void>;
+  onReorderSteps: (goalId: string, orderedStepIds: string[]) => Promise<void>;
+};
+
+function formatDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateString(value: string): Date | null {
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function GoalDetailsModal({
+  goal,
+  visible,
+  onClose,
+  onSaveGoal,
+  onMarkGoalCompleted,
+  onAddStep,
+  onOpenStep,
+  onToggleStepStatus,
+  onReorderSteps,
+}: GoalDetailsModalProps) {
+  const [editMode, setEditMode] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [estimatedCompletionDate, setEstimatedCompletionDate] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!goal || !visible) {
+      return;
+    }
+
+    setEditMode(false);
+    setTitle(goal.title);
+    setDescription(goal.description);
+    setEstimatedCompletionDate(formatDateString(goal.estimatedCompletionDate));
+    setSaving(false);
+    setError(null);
+  }, [goal, visible]);
+
+  function handleClose(): void {
+    setEditMode(false);
+    setSaving(false);
+    setError(null);
+    onClose();
+  }
+
+  async function handleSave(): Promise<void> {
+    if (!goal) {
+      return;
+    }
+
+    if (!title.trim()) {
+      setError('Goal name is required.');
+      return;
+    }
+
+    const parsedDate = parseDateString(estimatedCompletionDate);
+    if (!parsedDate) {
+      setError('Estimated completion date must use YYYY-MM-DD.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onSaveGoal(goal.id, {
+        title: title.trim(),
+        description: description.trim(),
+        estimatedCompletionDate: parsedDate,
+      });
+      setEditMode(false);
+    } catch {
+      setError('Failed to save goal changes.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleMarkComplete(): Promise<void> {
+    if (!goal) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onMarkGoalCompleted(goal.id);
+      setEditMode(false);
+    } catch {
+      setError('Failed to mark goal complete.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const headerAccessory = goal ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={editMode ? 'Cancel goal editing' : 'Edit goal'}
+      onPress={() => {
+        setError(null);
+        setEditMode((current) => !current);
+      }}
+      style={({ pressed }) => [styles.headerButton, pressed ? styles.buttonPressed : null]}
+    >
+      <Text style={styles.headerButtonText}>{editMode ? 'Cancel' : 'Edit'}</Text>
+    </Pressable>
+  ) : null;
+
+  return (
+    <AppModal visible={visible} title="Goal Details" onClose={handleClose} headerAccessory={headerAccessory}>
+      {goal ? (
+        <ScrollView contentContainerStyle={styles.content}>
+          {editMode ? (
+            <View style={styles.section}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Goal name</Text>
+                <TextInput
+                  accessibilityLabel="Edit goal name"
+                  value={title}
+                  onChangeText={setTitle}
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Description</Text>
+                <TextInput
+                  accessibilityLabel="Edit goal description"
+                  value={description}
+                  onChangeText={setDescription}
+                  style={[styles.input, styles.textArea]}
+                  multiline
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Estimated completion date (YYYY-MM-DD)</Text>
+                <TextInput
+                  accessibilityLabel="Edit goal estimated completion date"
+                  value={estimatedCompletionDate}
+                  onChangeText={setEstimatedCompletionDate}
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.actionColumn}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Save goal changes"
+                  onPress={handleSave}
+                  disabled={saving}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && !saving ? styles.buttonPressed : null,
+                    saving ? styles.buttonDisabled : null,
+                  ]}
+                >
+                  <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+                </Pressable>
+
+                {goal.status !== 'completed' ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Mark goal complete"
+                    onPress={handleMarkComplete}
+                    disabled={saving}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      pressed && !saving ? styles.buttonPressed : null,
+                      saving ? styles.buttonDisabled : null,
+                    ]}
+                  >
+                    <Text style={styles.secondaryButtonText}>Mark Goal Complete</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.section}>
+              <AppCard style={styles.summaryCard}>
+                <Text style={styles.goalTitle}>{goal.title}</Text>
+                <Text style={styles.goalDescription}>{goal.description || 'No description yet.'}</Text>
+                <Text style={styles.metaText}>Target date: {formatDateString(goal.estimatedCompletionDate)}</Text>
+                <Text style={styles.metaText}>Status: {goal.status === 'completed' ? 'Completed' : 'Active'}</Text>
+                <Text style={styles.metaText}>{goal.progressText}</Text>
+              </AppCard>
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Steps</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add step"
+                onPress={onAddStep}
+                style={({ pressed }) => [styles.headerButton, pressed ? styles.buttonPressed : null]}
+              >
+                <Text style={styles.headerButtonText}>Add Step</Text>
+              </Pressable>
+            </View>
+
+            {goal.steps.length === 0 ? (
+              <AppCard style={styles.summaryCard}>
+                <Text style={styles.goalDescription}>No steps yet. Add the first action for this goal.</Text>
+              </AppCard>
+            ) : (
+              <DraggableStepList
+                steps={goal.steps}
+                onOpenStep={onOpenStep}
+                onToggleStepStatus={(step) => void onToggleStepStatus(step)}
+                onReorder={(orderedStepIds) => onReorderSteps(goal.id, orderedStepIds)}
+              />
+            )}
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </ScrollView>
+      ) : null}
+    </AppModal>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    gap: spacing.lg,
+  },
+  section: {
+    gap: spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.button,
+    color: colors.text,
+  },
+  summaryCard: {
+    gap: spacing.sm,
+  },
+  goalTitle: {
+    ...typography.button,
+    fontSize: 18,
+    color: colors.text,
+  },
+  goalDescription: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  metaText: {
+    ...typography.helper,
+    color: colors.textSecondary,
+  },
+  headerButton: {
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  headerButtonText: {
+    ...typography.helper,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  fieldGroup: {
+    gap: spacing.xs,
+  },
+  label: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  input: {
+    ...typography.body,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  textArea: {
+    minHeight: 96,
+    textAlignVertical: 'top',
+  },
+  actionColumn: {
+    gap: spacing.md,
+  },
+  primaryButton: {
+    borderRadius: radii.md,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  primaryButtonText: {
+    ...typography.button,
+    color: colors.surface,
+  },
+  secondaryButton: {
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  secondaryButtonText: {
+    ...typography.button,
+    color: colors.textPrimary,
+  },
+  buttonPressed: {
+    opacity: 0.84,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  errorText: {
+    ...typography.helper,
+    color: colors.dangerText,
+  },
+});

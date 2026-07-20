@@ -4,6 +4,14 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { CalendarEvent } from '../features/calendar/calendarTypes';
 
+jest.mock('../features/notes/useNotes', () => ({
+  useNotes: jest.fn(() => ({
+    notes: [],
+    uiState: 'empty',
+    createNote: jest.fn(),
+  })),
+}));
+
 // Mock Firebase services
 jest.mock('../services/firebase/firebaseAuth', () => ({
   getFirebaseAuth: jest.fn(() => ({ currentUser: { uid: 'test-user' } })),
@@ -56,7 +64,7 @@ describe('CalendarScreen interaction states', () => {
     expect(screen.getByText('Month')).toBeTruthy();
     expect(screen.getByLabelText('Previous day')).toBeTruthy();
     expect(screen.getByLabelText('Next day')).toBeTruthy();
-    expect(screen.getByText('Add Event')).toBeTruthy();
+    expect(screen.getByText('Focus')).toBeTruthy();
   });
 
   it('renders loading state in the timeline area', () => {
@@ -76,7 +84,7 @@ describe('CalendarScreen interaction states', () => {
       makeTestEvent({ id: 'e1', title: 'Morning standup' }),
       makeTestEvent({ id: 'e2', title: 'Design review', startAt: new Date(2026, 6, 17, 14, 0), endAt: new Date(2026, 6, 17, 15, 0) }),
     ];
-    render(<CalendarScreen stateOverride="ready" eventsOverride={events} />);
+    render(<CalendarScreen stateOverride="ready" eventsOverride={events} initialDateOverride={new Date(2026, 6, 17)} />);
 
     expect(screen.getByText('Morning standup')).toBeTruthy();
     expect(screen.getByText('Design review')).toBeTruthy();
@@ -84,7 +92,8 @@ describe('CalendarScreen interaction states', () => {
 
   it('Add Event FAB is disabled in loading state', () => {
     render(<CalendarScreen stateOverride="loading" />);
-    const fab = screen.getByText('Add Event');
-    expect(fab).toBeTruthy();
+    const fabButtons = screen.getAllByRole('button');
+    const addEventFab = fabButtons[fabButtons.length - 1]; // Last button is Add Event FAB
+    expect(addEventFab.props.accessibilityState.disabled).toBe(true);
   });
 });
