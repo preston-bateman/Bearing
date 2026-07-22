@@ -24,31 +24,31 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | M1.1 | completed | Initialize Expo app and folder structure | Expo TypeScript app scaffolded in mobile/ with baseline structure and config; platform runtime validation deferred per user environment setup |
 | M1.2 | completed | Configure Firebase project, auth, env management | Firebase init/auth bootstrap and env strategy validated in development |
 | M1.3 | completed | Add lint, formatter, tests, and CI baseline | CI validates lint and tests on PR |
-| M1.4 | not-started | Set up navigation shell with bottom tabs | Calendar, Goals, Notes, Profile tabs routable |
+| M1.4 | completed | Set up navigation shell with bottom tabs | Calendar, Goals, Notes, Profile tabs routable |
 
 ### M2 - Design System and UX Foundation
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M2.1 | not-started | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
-| M2.2 | not-started | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
-| M2.3 | not-started | Define interaction states (loading, empty, error, completed/past) | State patterns implemented and consistent |
+| M2.1 | completed | Define visual language, typography, spacing, and component tokens | Design tokens committed and documented |
+| M2.2 | completed | Build reusable primitives (cards, modals, FAB, list items, headers) | Core UI primitives integrated across tabs |
+| M2.3 | completed | Define interaction states (loading, empty, error, completed/past) | Calendar state patterns implemented and consistent with event-first language; progress tracking intentionally reserved for Goals |
 
 ### M3 - Calendar and Focus Mode
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M3.1 | not-started | Build calendar screen interaction model | Calendar view stable and performant |
-| M3.2 | not-started | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
-| M3.3 | not-started | Implement Idea Dump capture to Notes pipeline | Idea Dump creates note records reliably |
-| M3.4 | not-started | Add calendar event CRUD baseline | Local app event lifecycle functional |
+| M3.1 | completed | Build calendar screen interaction model | Calendar day and month views stable and performant |
+| M3.2 | completed | Add calendar event CRUD baseline | Local app event lifecycle functional |
+| M3.3 | completed | Implement Idea Dump capture to Notes pipeline | Idea Dump creates note records reliably |
+| M3.4 | completed | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
 
 ### M4 - Goals Core Experience
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M4.1 | not-started | Implement goals list cards with required fields | Cards show goal name, date, next task |
-| M4.2 | not-started | Build SMART onboarding + goal creation wizard (manual path) | User can create goal and steps without AI |
-| M4.3 | not-started | Implement Goal Details modal with edit capabilities | Goal edit/save/close behavior validated |
-| M4.4 | not-started | Implement step list interactions (add, complete, reorder) | Reorder and completion state persist correctly |
-| M4.5 | not-started | Implement Step Details modal with schedule action | Step details and linked event list functional |
+| M4.1 | completed | Implement goals list cards with required fields | Cards show goal name, date, next task |
+| M4.2 | completed | Build SMART onboarding + goal creation wizard (manual path) | User can create goal and steps without AI |
+| M4.3 | completed | Implement Goal Details modal with edit capabilities | Goal edit/save/close behavior validated |
+| M4.4 | completed | Implement step list interactions (add, complete, reorder) | Reorder and completion state persist correctly |
+| M4.5 | completed | Implement Step Details modal with schedule action | Step details and linked event list functional |
 
 ### M5 - Notes and Profile
 | Task ID | Status | Description | Exit Criteria |
@@ -83,21 +83,29 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 | M8.3 | not-started | Add analytics dashboards and operational alerts | Product and reliability telemetry available |
 | M8.4 | not-started | Finalize legal copy (privacy policy, terms, disclosures) | Store-compliant legal docs available |
 
-### M9 - Monetization Readiness
+### M9 - Final UI Fixes and Operability Fixes
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M9.1 | not-started | Configure subscription products for iOS and Android | Products testable in sandbox environments |
-| M9.2 | not-started | Build paywall UX and entitlement restoration flows | Purchase, restore, and cancel paths validated |
-| M9.3 | not-started | Validate regional pricing and trial strategy | Pricing matrix approved for launch markets |
+| M9.1 | not-started | Polish UI interactions and accessibility | All screens pass WCAG AA accessibility audit |
+| M9.2 | not-started | Fix operability edge cases and error recovery | Edge cases in critical flows handled gracefully |
+| M9.3 | not-started | Optimize app performance and startup time | App launch and transitions meet performance targets |
+| M9.4 | not-started | Run end-to-end user acceptance testing | UAT signoff from stakeholders |
 
-### M10 - Release and Store Deployment
+### M10 - Monetization Readiness
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M10.1 | not-started | Prepare release build pipelines and signing setup | Signed release candidates generated |
-| M10.2 | not-started | Complete App Store listing assets and metadata | Apple submission package ready |
-| M10.3 | not-started | Complete Google Play listing assets and metadata | Play submission package ready |
-| M10.4 | not-started | Run beta testing cycles (TestFlight/Internal Testing) | Critical launch blockers resolved |
-| M10.5 | not-started | Submit and publish to both stores | App live in both stores |
+| M10.1 | not-started | Configure subscription products for iOS and Android | Products testable in sandbox environments |
+| M10.2 | not-started | Build paywall UX and entitlement restoration flows | Purchase, restore, and cancel paths validated |
+| M10.3 | not-started | Validate regional pricing and trial strategy | Pricing matrix approved for launch markets |
+
+### M11 - Release and Store Deployment
+| Task ID | Status | Description | Exit Criteria |
+| --- | --- | --- | --- |
+| M11.1 | not-started | Prepare release build pipelines and signing setup | Signed release candidates generated |
+| M11.2 | not-started | Complete App Store listing assets and metadata | Apple submission package ready |
+| M11.3 | not-started | Complete Google Play listing assets and metadata | Play submission package ready |
+| M11.4 | not-started | Run beta testing cycles (TestFlight/Internal Testing) | Critical launch blockers resolved |
+| M11.5 | not-started | Submit and publish to both stores | App live in both stores |
 
 ## Dependency Order Summary
 1. M0 Product definition
@@ -107,8 +115,9 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 5. M6 Integrations and interoperability
 6. M7 Premium and AI layer
 7. M8 Quality, security, compliance
-8. M9 Monetization readiness
-9. M10 Store release
+8. M9 Final UI and operability fixes
+9. M10 Monetization readiness
+10. M11 Store release
 
 ## Validation Gates Per Milestone
 - Functional gate: Acceptance criteria met for milestone exit.
@@ -117,5 +126,5 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 - Product gate: UX and copy align with product brief.
 
 ## Immediate Next Steps
-1. Start M1.3 by configuring lint/test/CI baseline.
-2. Start M1.4 by creating bottom-tab navigation shell placeholders.
+1. Start M3.1 by implementing Apple-calendar-inspired day view (hourly timeline) and month view (horizontally scrollable month grid) with date navigation.
+2. Start M3.2 by implementing local calendar event CRUD backed by Firestore.

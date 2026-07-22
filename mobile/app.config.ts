@@ -9,6 +9,7 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
+  plugins: ['expo-audio'],
   ios: {
     supportsTablet: true,
   },
