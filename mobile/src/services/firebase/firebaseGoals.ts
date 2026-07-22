@@ -4,7 +4,6 @@ import {
   QueryDocumentSnapshot,
   Timestamp,
   Unsubscribe,
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -90,7 +89,7 @@ function docToGoalStep(snapshot: QueryDocumentSnapshot<DocumentData>): GoalStepR
   };
 }
 
-async function syncGoalRollup(goalId: string): Promise<void> {
+async function syncGoalRollup(userId: string, goalId: string): Promise<void> {
   const db = getFirebaseFirestore();
   const goalRef = doc(db, 'goals', goalId);
   const goalSnapshot = await getDoc(goalRef);
@@ -100,7 +99,13 @@ async function syncGoalRollup(goalId: string): Promise<void> {
   }
 
   const goalData = goalSnapshot.data();
-  const stepsSnapshot = await getDocs(query(collection(db, 'goalSteps'), where('goalId', '==', goalId)));
+  const stepsSnapshot = await getDocs(
+    query(
+      collection(db, 'goalSteps'),
+      where('userId', '==', userId),
+      where('goalId', '==', goalId),
+    ),
+  );
   const normalizedSteps = normalizeGoalSteps(stepsSnapshot.docs.map(docToGoalStep));
   const nextStep = getFirstIncompleteStep(normalizedSteps);
   const rolledStatus = deriveGoalStatus(goalData.status as GoalStatus, normalizedSteps);
@@ -249,11 +254,15 @@ export async function createGoalStep(
   goalId: string,
   input: CreateGoalStepInput,
   order: number,
+  currentGoalStatus: GoalStatus,
+  currentNextStepId: string | null,
 ): Promise<string> {
   const db = getFirebaseFirestore();
   const now = Timestamp.now();
+  const batch = writeBatch(db);
+  const stepRef = doc(collection(db, 'goalSteps'));
 
-  const stepRef = await addDoc(collection(db, 'goalSteps'), {
+  batch.set(stepRef, {
     userId,
     goalId,
     title: input.title.trim(),
@@ -267,8 +276,46 @@ export async function createGoalStep(
     updatedAt: now,
   });
 
-  await syncGoalRollup(goalId);
+  batch.update(doc(db, 'goals', goalId), {
+    nextStepId: currentNextStepId ?? stepRef.id,
+    status: currentGoalStatus === 'archived' ? 'archived' : 'active',
+    updatedAt: now,
+  });
+
+  await batch.commit();
   return stepRef.id;
+}
+
+export async function deleteGoalStep(
+  _userId: string,
+  goalId: string,
+  stepId: string,
+  orderedRemainingSteps: GoalStepRecord[],
+  nextGoalStatus: GoalStatus,
+  nextStepId: string | null,
+): Promise<void> {
+  const db = getFirebaseFirestore();
+  const batch = writeBatch(db);
+  const now = Timestamp.now();
+
+  batch.delete(doc(db, 'goalSteps', stepId));
+
+  orderedRemainingSteps.forEach((step, index) => {
+    if (step.order !== index) {
+      batch.update(doc(db, 'goalSteps', step.id), {
+        order: index,
+        updatedAt: now,
+      });
+    }
+  });
+
+  batch.update(doc(db, 'goals', goalId), {
+    nextStepId,
+    status: nextGoalStatus,
+    updatedAt: now,
+  });
+
+  await batch.commit();
 }
 
 export async function updateGoalStep(
@@ -295,7 +342,7 @@ export async function updateGoalStep(
   }
 
   await updateDoc(doc(db, 'goalSteps', stepId), updates);
-  await syncGoalRollup(goalId);
+  await syncGoalRollup(_userId, goalId);
 }
 
 export async function reorderGoalSteps(
@@ -315,5 +362,5 @@ export async function reorderGoalSteps(
   });
 
   await batch.commit();
-  await syncGoalRollup(goalId);
+  await syncGoalRollup(_userId, goalId);
 }

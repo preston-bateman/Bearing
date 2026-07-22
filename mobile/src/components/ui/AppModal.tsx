@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
   },
   sheet: {
+    maxHeight: '88%',
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     backgroundColor: colors.background,
@@ -87,6 +88,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   body: {
+    flexShrink: 1,
+    minHeight: 0,
     gap: spacing.md,
   },
 });

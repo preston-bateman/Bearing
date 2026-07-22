@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   composeGoalWithSteps,
   deriveGoalStatus,
+  normalizeGoalSteps,
 } from './goalHelpers';
 import {
   CreateGoalInput,
@@ -18,6 +19,7 @@ import { getFirebaseAuth } from '../../services/firebase/firebaseAuth';
 import {
   createGoal as createFirebaseGoal,
   createGoalStep as createFirebaseGoalStep,
+  deleteGoalStep as deleteFirebaseGoalStep,
   markGoalCompleted as markFirebaseGoalCompleted,
   reorderGoalSteps as reorderFirebaseGoalSteps,
   subscribeToGoals,
@@ -50,6 +52,7 @@ export type UseGoalsReturn = {
   updateGoal: (goalId: string, fields: UpdateGoalInput) => Promise<void>;
   markGoalCompleted: (goalId: string) => Promise<void>;
   createStep: (goalId: string, input: CreateGoalStepInput) => Promise<void>;
+  deleteStep: (stepId: string) => Promise<void>;
   updateStep: (stepId: string, fields: UpdateGoalStepInput) => Promise<void>;
   reorderSteps: (goalId: string, orderedStepIds: string[]) => Promise<void>;
 };
@@ -172,9 +175,45 @@ export function useGoals(): UseGoalsReturn {
         throw new Error('Goal not found.');
       }
 
-      await createFirebaseGoalStep(userId, goalId, input, goal.steps.length);
+      await createFirebaseGoalStep(userId, goalId, input, goal.steps.length, goal.status, goal.nextStep?.id ?? null);
     },
     [goalMap],
+  );
+
+  const deleteStep = useCallback(
+    async (stepId: string): Promise<void> => {
+      const userId = getFirebaseAuth().currentUser?.uid;
+      if (!userId) {
+        throw new Error('User is not authenticated.');
+      }
+
+      const targetStep = steps.find((step) => step.id === stepId);
+      if (!targetStep) {
+        throw new Error('Goal step not found.');
+      }
+
+      const targetGoal = goalMap.find((goal) => goal.id === targetStep.goalId);
+      if (!targetGoal) {
+        throw new Error('Goal not found.');
+      }
+
+      const remainingSteps = normalizeGoalSteps(targetGoal.steps.filter((step) => step.id !== stepId));
+      const nextGoalStatus = deriveGoalStatus(targetGoal.status, remainingSteps);
+      const nextStep = nextGoalStatus === 'completed' ? null : composeGoalWithSteps(
+        { ...targetGoal, status: nextGoalStatus },
+        remainingSteps,
+      ).nextStep;
+
+      await deleteFirebaseGoalStep(
+        userId,
+        targetGoal.id,
+        stepId,
+        remainingSteps,
+        nextGoalStatus,
+        nextStep?.id ?? null,
+      );
+    },
+    [goalMap, steps],
   );
 
   const updateStep = useCallback(
@@ -210,6 +249,7 @@ export function useGoals(): UseGoalsReturn {
     updateGoal,
     markGoalCompleted,
     createStep,
+    deleteStep,
     updateStep,
     reorderSteps,
   };

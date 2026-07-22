@@ -1,15 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import App from '../../App';
 import { useAuthBootstrap } from '../features/auth/useAuthBootstrap';
+import {
+  sendPasswordResetForEmail,
+  signInWithEmailPassword,
+} from '../services/firebase/firebaseAuthActions';
 
 jest.mock('../features/auth/useAuthBootstrap', () => ({
   useAuthBootstrap: jest.fn(),
 }));
 
 jest.mock('../services/firebase/firebaseAuthActions', () => ({
-  signInWithAnonymousAuth: jest.fn(),
+  registerWithEmailPassword: jest.fn(),
+  sendPasswordResetForEmail: jest.fn(),
+  signInWithEmailPassword: jest.fn(),
   signOutCurrentUser: jest.fn(),
 }));
 
@@ -79,8 +85,54 @@ describe('App shell', () => {
     render(<App />);
 
     expect(screen.getByText('Bearing')).toBeTruthy();
-    expect(screen.getByText('No active session found.')).toBeTruthy();
-    expect(screen.getByText('Open Sign-In Entry')).toBeTruthy();
+    expect(screen.getByLabelText('Email address')).toBeTruthy();
+    expect(screen.getByLabelText('Password')).toBeTruthy();
+    expect(screen.getByText('Sign In')).toBeTruthy();
+  });
+
+  it('submits email sign-in from the unauthenticated shell', async () => {
+    const mockedUseAuthBootstrap = useAuthBootstrap as jest.MockedFunction<typeof useAuthBootstrap>;
+    const mockedSignIn = signInWithEmailPassword as jest.MockedFunction<typeof signInWithEmailPassword>;
+
+    mockedUseAuthBootstrap.mockReturnValue({
+      status: 'unauthenticated',
+      user: null,
+      error: null,
+    });
+
+    render(<App />);
+
+    fireEvent.changeText(screen.getByLabelText('Email address'), 'person@example.com');
+    fireEvent.changeText(screen.getByLabelText('Password'), 'hunter2!');
+    await act(async () => {
+      fireEvent.press(screen.getByText('Sign In'));
+    });
+
+    await waitFor(() => {
+      expect(mockedSignIn).toHaveBeenCalledWith('person@example.com', 'hunter2!');
+    });
+  });
+
+  it('sends a password reset email from the unauthenticated shell', async () => {
+    const mockedUseAuthBootstrap = useAuthBootstrap as jest.MockedFunction<typeof useAuthBootstrap>;
+    const mockedPasswordReset = sendPasswordResetForEmail as jest.MockedFunction<typeof sendPasswordResetForEmail>;
+
+    mockedUseAuthBootstrap.mockReturnValue({
+      status: 'unauthenticated',
+      user: null,
+      error: null,
+    });
+
+    render(<App />);
+
+    fireEvent.changeText(screen.getByLabelText('Email address'), 'person@example.com');
+    await act(async () => {
+      fireEvent.press(screen.getByText('Send Password Reset Email'));
+    });
+
+    await waitFor(() => {
+      expect(mockedPasswordReset).toHaveBeenCalledWith('person@example.com');
+    });
   });
 
   it('renders authenticated users into the tab shell and switches tabs', () => {

@@ -36,19 +36,19 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 ### M3 - Calendar and Focus Mode
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M3.1 | not-started | Build calendar screen interaction model | Calendar day and month views stable and performant |
-| M3.2 | not-started | Add calendar event CRUD baseline | Local app event lifecycle functional |
-| M3.3 | not-started | Implement Idea Dump capture to Notes pipeline | Idea Dump creates note records reliably |
-| M3.4 | not-started | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
+| M3.1 | completed | Build calendar screen interaction model | Calendar day and month views stable and performant |
+| M3.2 | completed | Add calendar event CRUD baseline | Local app event lifecycle functional |
+| M3.3 | completed | Implement Idea Dump capture to Notes pipeline | Idea Dump creates note records reliably |
+| M3.4 | completed | Implement Focus Mode UI and active event timer | Focus Mode usable from FAB and event state |
 
 ### M4 - Goals Core Experience
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M4.1 | not-started | Implement goals list cards with required fields | Cards show goal name, date, next task |
-| M4.2 | not-started | Build SMART onboarding + goal creation wizard (manual path) | User can create goal and steps without AI |
-| M4.3 | not-started | Implement Goal Details modal with edit capabilities | Goal edit/save/close behavior validated |
-| M4.4 | not-started | Implement step list interactions (add, complete, reorder) | Reorder and completion state persist correctly |
-| M4.5 | not-started | Implement Step Details modal with schedule action | Step details and linked event list functional |
+| M4.1 | completed | Implement goals list cards with required fields | Cards show goal name, date, next task |
+| M4.2 | completed | Build SMART onboarding + goal creation wizard (manual path) | User can create goal and steps without AI |
+| M4.3 | completed | Implement Goal Details modal with edit capabilities | Goal edit/save/close behavior validated |
+| M4.4 | completed | Implement step list interactions (add, complete, reorder) | Reorder and completion state persist correctly |
+| M4.5 | completed | Implement Step Details modal with schedule action | Step details and linked event list functional |
 
 ### M5 - Notes and Profile
 | Task ID | Status | Description | Exit Criteria |

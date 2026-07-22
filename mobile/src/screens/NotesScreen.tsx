@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AddNoteModal } from '../components/notes/AddNoteModal';
+import { NoteDetailModal } from '../components/notes/NoteDetailModal';
 import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { AppCard } from '../components/ui/AppCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { colors, layout, radii, spacing, typography } from '../design/tokens';
 import { useNotes } from '../features/notes/useNotes';
-import { CreateNoteInput, NoteRecord } from '../features/notes/noteTypes';
+import { CreateNoteInput, NoteRecord, UpdateNoteInput } from '../features/notes/noteTypes';
 
 function formatDateTime(date: Date): string {
   return date.toLocaleString(undefined, {
@@ -23,12 +24,23 @@ function noteSourceLabel(note: NoteRecord): string {
 }
 
 export function NotesScreen() {
-  const { notes, uiState, createNote } = useNotes();
+  const { notes, uiState, createNote, updateNote, deleteNote } = useNotes();
   const [addNoteVisible, setAddNoteVisible] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+
+  const selectedNote = selectedNoteId ? notes.find((note) => note.id === selectedNoteId) ?? null : null;
 
   async function handleCreateNote(input: CreateNoteInput): Promise<void> {
     await createNote(input);
-    setAddNoteVisible(false);
+  }
+
+  async function handleUpdateNote(noteId: string, fields: UpdateNoteInput): Promise<void> {
+    await updateNote(noteId, fields);
+  }
+
+  async function handleDeleteNote(noteId: string): Promise<void> {
+    await deleteNote(noteId);
+    setSelectedNoteId((current) => (current === noteId ? null : current));
   }
 
   return (
@@ -65,17 +77,22 @@ export function NotesScreen() {
 
         {uiState === 'ready'
           ? notes.map((note) => (
-              <AppCard key={note.id} style={styles.noteCard}>
-                <View style={styles.noteMetaRow}>
-                  <Text style={styles.noteSource}>{noteSourceLabel(note)}</Text>
-                  <Text style={styles.noteDate}>{formatDateTime(note.updatedAt)}</Text>
-                </View>
-                <Text style={styles.noteTitle}>{note.title}</Text>
-                <Text style={styles.noteBody}>{note.body}</Text>
-                {note.sourceEventId ? (
-                  <Text style={styles.noteLinkedText}>Linked to a Focus Mode event</Text>
-                ) : null}
-              </AppCard>
+              <Pressable
+                key={note.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Open note ${note.title}`}
+                onPress={() => setSelectedNoteId(note.id)}
+                style={({ pressed }) => [pressed ? styles.noteCardPressed : null]}
+              >
+                <AppCard style={styles.noteCard}>
+                  <View style={styles.noteMetaRow}>
+                    <Text style={styles.noteSource}>{noteSourceLabel(note)}</Text>
+                    <Text style={styles.noteDate}>{formatDateTime(note.updatedAt)}</Text>
+                  </View>
+                  <Text style={styles.noteTitle}>{note.title}</Text>
+                  <Text style={styles.noteBody}>{note.body}</Text>
+                </AppCard>
+              </Pressable>
             ))
           : null}
       </ScrollView>
@@ -92,6 +109,14 @@ export function NotesScreen() {
         visible={addNoteVisible}
         onClose={() => setAddNoteVisible(false)}
         onSave={handleCreateNote}
+      />
+
+      <NoteDetailModal
+        visible={selectedNote !== null}
+        note={selectedNote}
+        onClose={() => setSelectedNoteId(null)}
+        onSave={handleUpdateNote}
+        onDelete={handleDeleteNote}
       />
     </View>
   );
@@ -121,6 +146,9 @@ const styles = StyleSheet.create({
   noteCard: {
     gap: spacing.md,
   },
+  noteCardPressed: {
+    opacity: 0.92,
+  },
   noteMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -142,11 +170,6 @@ const styles = StyleSheet.create({
   noteBody: {
     ...typography.body,
     color: colors.textPrimary,
-  },
-  noteLinkedText: {
-    ...typography.helper,
-    color: colors.brand,
-    fontWeight: '600',
   },
   fabContainer: {
     position: 'absolute',

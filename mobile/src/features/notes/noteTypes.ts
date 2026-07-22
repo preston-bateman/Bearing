@@ -23,3 +23,8 @@ export type CreateNoteInput = {
   sourceEventId?: string | null;
   sourceStepId?: string | null;
 };
+
+export type UpdateNoteInput = {
+  title: string;
+  body: string;
+};

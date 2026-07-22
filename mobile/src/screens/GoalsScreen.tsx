@@ -31,7 +31,7 @@ function formatDate(date: Date): string {
 }
 
 export function GoalsScreen() {
-  const { goals, uiState, createGoal, updateGoal, markGoalCompleted, createStep, updateStep, reorderSteps } =
+  const { goals, uiState, createGoal, updateGoal, markGoalCompleted, createStep, deleteStep, updateStep, reorderSteps } =
     useGoals();
   const [createGoalVisible, setCreateGoalVisible] = useState(false);
   const [addStepVisible, setAddStepVisible] = useState(false);
@@ -79,7 +79,11 @@ export function GoalsScreen() {
     }
 
     await createStep(selectedGoal.id, input);
-    closeGoalDetails();
+  }
+
+  async function handleDeleteStep(step: GoalStepRecord): Promise<void> {
+    await deleteStep(step.id);
+    setSelectedStepId(null);
   }
 
   async function handleSaveGoal(
@@ -205,6 +209,7 @@ export function GoalsScreen() {
         linkedEventsState={linkedEventsState}
         onClose={() => setSelectedStepId(null)}
         onSaveStep={handleSaveStep}
+        onDeleteStep={handleDeleteStep}
         onSchedule={(step) => setScheduleStepId(step.id)}
         onToggleComplete={handleToggleStepStatus}
       />

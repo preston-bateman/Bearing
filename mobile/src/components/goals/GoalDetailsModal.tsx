@@ -1,8 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AppCard } from '../ui/AppCard';
 import { AppModal } from '../ui/AppModal';
+import {
+  GoalDateField,
+  GoalDateParts,
+  GoalDatePicker,
+  MONTH_OPTIONS,
+  YEAR_OPTION_COUNT,
+  buildDefaultGoalDateParts,
+  buildGoalDateParts,
+  formatGoalDateParts,
+  formatTwoDigits,
+  getDayOptions,
+  getGoalDateFromParts,
+  isFutureDate,
+} from './GoalDatePicker';
 import { colors, radii, spacing, typography } from '../../design/tokens';
 import { GoalStepRecord, GoalWithSteps } from '../../features/goals/goalTypes';
 import { DraggableStepList } from './DraggableStepList';
@@ -20,20 +34,11 @@ type GoalDetailsModalProps = {
 };
 
 function formatDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateString(value: string): Date | null {
-  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) {
-    return null;
-  }
-
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export function GoalDetailsModal({
@@ -50,9 +55,16 @@ export function GoalDetailsModal({
   const [editMode, setEditMode] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [estimatedCompletionDate, setEstimatedCompletionDate] = useState('');
+  const [dateParts, setDateParts] = useState<GoalDateParts>({ month: 1, day: 1, year: 2026 });
+  const [activeDateField, setActiveDateField] = useState<GoalDateField | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const today = useMemo(() => new Date(), []);
+  const yearOptions = useMemo(
+    () => Array.from({ length: YEAR_OPTION_COUNT }, (_, index) => today.getFullYear() + index),
+    [today],
+  );
+  const dayOptions = useMemo(() => getDayOptions(dateParts.month, dateParts.year), [dateParts.month, dateParts.year]);
 
   useEffect(() => {
     if (!goal || !visible) {
@@ -62,16 +74,34 @@ export function GoalDetailsModal({
     setEditMode(false);
     setTitle(goal.title);
     setDescription(goal.description);
-    setEstimatedCompletionDate(formatDateString(goal.estimatedCompletionDate));
+    setDateParts(buildGoalDateParts(goal.estimatedCompletionDate));
+    setActiveDateField(null);
     setSaving(false);
     setError(null);
   }, [goal, visible]);
 
   function handleClose(): void {
     setEditMode(false);
+    setDateParts(buildDefaultGoalDateParts(today));
+    setActiveDateField(null);
     setSaving(false);
     setError(null);
     onClose();
+  }
+
+  function updateDateField(field: GoalDateField, value: number): void {
+    setDateParts((current) => {
+      const next = { ...current, [field]: value };
+      const validDays = getDayOptions(next.month, next.year);
+
+      if (!validDays.includes(next.day)) {
+        next.day = validDays[validDays.length - 1];
+      }
+
+      return next;
+    });
+    setActiveDateField(null);
+    setError(null);
   }
 
   async function handleSave(): Promise<void> {
@@ -84,9 +114,9 @@ export function GoalDetailsModal({
       return;
     }
 
-    const parsedDate = parseDateString(estimatedCompletionDate);
-    if (!parsedDate) {
-      setError('Estimated completion date must use YYYY-MM-DD.');
+    const parsedDate = getGoalDateFromParts(dateParts);
+    if (!isFutureDate(parsedDate, today)) {
+      setError('Estimated completion date must be in the future.');
       return;
     }
 
@@ -142,7 +172,7 @@ export function GoalDetailsModal({
   return (
     <AppModal visible={visible} title="Goal Details" onClose={handleClose} headerAccessory={headerAccessory}>
       {goal ? (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
           {editMode ? (
             <View style={styles.section}>
               <View style={styles.fieldGroup}>
@@ -167,12 +197,20 @@ export function GoalDetailsModal({
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Estimated completion date (YYYY-MM-DD)</Text>
-                <TextInput
-                  accessibilityLabel="Edit goal estimated completion date"
-                  value={estimatedCompletionDate}
-                  onChangeText={setEstimatedCompletionDate}
-                  style={styles.input}
+                <GoalDatePicker
+                  title="Estimated completion date"
+                  summaryLabel={`Selected date: ${formatGoalDateParts(dateParts)}`}
+                  helperText="Format: MM-DD-YYYY"
+                  accessibilityPrefix="edit goal target"
+                  dateParts={dateParts}
+                  activeField={activeDateField}
+                  optionsByField={{
+                    month: MONTH_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+                    day: dayOptions.map((day) => ({ value: day, label: formatTwoDigits(day) })),
+                    year: yearOptions.map((year) => ({ value: year, label: String(year) })),
+                  }}
+                  onToggleField={(field) => setActiveDateField((current) => (current === field ? null : field))}
+                  onSelectField={updateDateField}
                 />
               </View>
 
@@ -255,6 +293,9 @@ export function GoalDetailsModal({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexShrink: 1,
+  },
   content: {
     gap: spacing.lg,
   },

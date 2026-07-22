@@ -1,8 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AppCard } from '../ui/AppCard';
 import { AppModal } from '../ui/AppModal';
+import {
+  GoalDateField,
+  GoalDateParts,
+  GoalDatePicker,
+  MONTH_OPTIONS,
+  YEAR_OPTION_COUNT,
+  buildDefaultGoalDateParts,
+  buildGoalDateParts,
+  formatGoalDateParts,
+  formatTwoDigits,
+  getDayOptions,
+  getGoalDateFromParts,
+  isFutureDate,
+} from './GoalDatePicker';
 import { colors, radii, spacing, typography } from '../../design/tokens';
 import { CalendarEvent } from '../../features/calendar/calendarTypes';
 import { GoalStepRecord } from '../../features/goals/goalTypes';
@@ -16,30 +30,17 @@ type StepDetailModalProps = {
   linkedEventsState: GoalStepEventsUiState;
   onClose: () => void;
   onSaveStep: (stepId: string, fields: { title: string; description: string; starter: string; estimatedFinishDate: Date | null }) => Promise<void>;
+  onDeleteStep: (step: GoalStepRecord) => Promise<void>;
   onSchedule: (step: GoalStepRecord) => void;
   onToggleComplete: (step: GoalStepRecord) => Promise<void>;
 };
 
 function formatDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateString(value: string): Date | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) {
-    return null;
-  }
-
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function formatLinkedEvent(event: CalendarEvent): string {
@@ -59,6 +60,7 @@ export function StepDetailModal({
   linkedEventsState,
   onClose,
   onSaveStep,
+  onDeleteStep,
   onSchedule,
   onToggleComplete,
 }: StepDetailModalProps) {
@@ -66,9 +68,16 @@ export function StepDetailModal({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [starter, setStarter] = useState('');
-  const [estimatedFinishDate, setEstimatedFinishDate] = useState('');
+  const [dateParts, setDateParts] = useState<GoalDateParts>({ month: 1, day: 1, year: 2026 });
+  const [activeDateField, setActiveDateField] = useState<GoalDateField | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const today = useMemo(() => new Date(), []);
+  const yearOptions = useMemo(
+    () => Array.from({ length: YEAR_OPTION_COUNT }, (_, index) => today.getFullYear() + index),
+    [today],
+  );
+  const dayOptions = useMemo(() => getDayOptions(dateParts.month, dateParts.year), [dateParts.month, dateParts.year]);
 
   useEffect(() => {
     if (!step || !visible) {
@@ -79,10 +88,26 @@ export function StepDetailModal({
     setTitle(step.title);
     setDescription(step.description);
     setStarter(step.starter);
-    setEstimatedFinishDate(step.estimatedFinishDate ? formatDateString(step.estimatedFinishDate) : '');
+    setDateParts(step.estimatedFinishDate ? buildGoalDateParts(step.estimatedFinishDate) : buildDefaultGoalDateParts(today));
+    setActiveDateField(null);
     setSaving(false);
     setError(null);
-  }, [step, visible]);
+  }, [step, today, visible]);
+
+  function updateDateField(field: GoalDateField, value: number): void {
+    setDateParts((current) => {
+      const next = { ...current, [field]: value };
+      const validDays = getDayOptions(next.month, next.year);
+
+      if (!validDays.includes(next.day)) {
+        next.day = validDays[validDays.length - 1];
+      }
+
+      return next;
+    });
+    setActiveDateField(null);
+    setError(null);
+  }
 
   async function handleSave(): Promise<void> {
     if (!step) {
@@ -94,8 +119,9 @@ export function StepDetailModal({
       return;
     }
 
-    if (estimatedFinishDate.trim() && !parseDateString(estimatedFinishDate)) {
-      setError('Estimated finish date must use YYYY-MM-DD.');
+    const parsedDate = getGoalDateFromParts(dateParts);
+    if (!isFutureDate(parsedDate, today)) {
+      setError('Estimated finish date must be in the future.');
       return;
     }
 
@@ -107,11 +133,29 @@ export function StepDetailModal({
         title: title.trim(),
         description: description.trim(),
         starter: starter.trim(),
-        estimatedFinishDate: parseDateString(estimatedFinishDate),
+        estimatedFinishDate: parsedDate,
       });
       setEditMode(false);
     } catch {
       setError('Failed to save step changes.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (!step) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onDeleteStep(step);
+      onClose();
+    } catch {
+      setError('Failed to delete step.');
     } finally {
       setSaving(false);
     }
@@ -171,12 +215,20 @@ export function StepDetailModal({
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Estimated finish date (YYYY-MM-DD)</Text>
-                <TextInput
-                  accessibilityLabel="Edit step estimated finish date"
-                  value={estimatedFinishDate}
-                  onChangeText={setEstimatedFinishDate}
-                  style={styles.input}
+                <GoalDatePicker
+                  title="Estimated finish date"
+                  summaryLabel={`Selected date: ${formatGoalDateParts(dateParts)}`}
+                  helperText="Format: MM-DD-YYYY"
+                  accessibilityPrefix="edit step target"
+                  dateParts={dateParts}
+                  activeField={activeDateField}
+                  optionsByField={{
+                    month: MONTH_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+                    day: dayOptions.map((day) => ({ value: day, label: formatTwoDigits(day) })),
+                    year: yearOptions.map((year) => ({ value: year, label: String(year) })),
+                  }}
+                  onToggleField={(field) => setActiveDateField((current) => (current === field ? null : field))}
+                  onSelectField={updateDateField}
                 />
               </View>
 
@@ -192,6 +244,20 @@ export function StepDetailModal({
                 ]}
               >
                 <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Delete step"
+                onPress={handleDelete}
+                disabled={saving}
+                style={({ pressed }) => [
+                  styles.dangerButton,
+                  pressed && !saving ? styles.buttonPressed : null,
+                  saving ? styles.buttonDisabled : null,
+                ]}
+              >
+                <Text style={styles.dangerButtonText}>Delete Step</Text>
               </Pressable>
             </View>
           ) : (
@@ -242,13 +308,13 @@ export function StepDetailModal({
 
             {linkedEventsState === 'error' ? (
               <AppCard style={styles.summaryCard}>
-                <Text style={styles.infoValue}>Unable to load linked events.</Text>
+                <Text style={styles.infoValue}>No Events Scheduled</Text>
               </AppCard>
             ) : null}
 
             {linkedEventsState === 'empty' || linkedEventsState === 'idle' ? (
               <AppCard style={styles.summaryCard}>
-                <Text style={styles.infoValue}>No linked events yet.</Text>
+                <Text style={styles.infoValue}>No Events Scheduled</Text>
               </AppCard>
             ) : null}
 
@@ -366,6 +432,19 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     ...typography.button,
     color: colors.textPrimary,
+  },
+  dangerButton: {
+    borderRadius: radii.md,
+    backgroundColor: colors.dangerSurface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  dangerButtonText: {
+    ...typography.button,
+    color: colors.dangerText,
   },
   actionColumn: {
     gap: spacing.md,

@@ -6,15 +6,18 @@ import {
   DocumentData,
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
 import { getFirebaseApp } from './firebaseApp';
-import { CreateNoteInput, NoteRecord } from '../../features/notes/noteTypes';
+import { CreateNoteInput, NoteRecord, UpdateNoteInput } from '../../features/notes/noteTypes';
 
 let cachedDb: Firestore | null = null;
 
@@ -49,7 +52,7 @@ function docToNote(snapshot: QueryDocumentSnapshot<DocumentData>): NoteRecord {
   };
 }
 
-function buildNoteTitle(input: CreateNoteInput): string {
+function buildNoteTitle(input: Pick<CreateNoteInput, 'title' | 'body'> & { source?: CreateNoteInput['source'] }): string {
   const explicitTitle = input.title?.trim();
   if (explicitTitle) {
     return explicitTitle;
@@ -108,4 +111,19 @@ export async function createNote(userId: string, input: CreateNoteInput): Promis
   });
 
   return docRef.id;
+}
+
+export async function updateNote(_userId: string, noteId: string, fields: UpdateNoteInput): Promise<void> {
+  const db = getFirebaseFirestore();
+
+  await updateDoc(doc(db, 'notes', noteId), {
+    title: buildNoteTitle({ title: fields.title, body: fields.body }),
+    body: fields.body.trim(),
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function deleteNote(_userId: string, noteId: string): Promise<void> {
+  const db = getFirebaseFirestore();
+  await deleteDoc(doc(db, 'notes', noteId));
 }

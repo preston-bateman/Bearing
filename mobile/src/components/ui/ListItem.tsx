@@ -15,6 +15,7 @@ export function ListItem({ title, description, trailingText, onPress, disabled =
     return (
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={title}
         onPress={onPress}
         disabled={disabled}
         style={({ pressed }: { pressed?: boolean }) => [

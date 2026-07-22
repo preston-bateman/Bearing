@@ -76,6 +76,25 @@ function makeGoal(overrides: Partial<GoalWithSteps> = {}): GoalWithSteps {
   };
 }
 
+function makeOrderedGoal(): GoalWithSteps {
+  const firstStep = makeStep();
+  const secondStep = makeStep({
+    id: 'step-2',
+    title: 'Pick a race date',
+    description: 'Choose the event to train for.',
+    starter: 'Check local race calendars',
+    order: 1,
+  });
+
+  return makeGoal({
+    steps: [firstStep, secondStep],
+    nextStep: firstStep,
+    nextStepId: firstStep.id,
+    totalStepCount: 2,
+    progressText: '0 of 2 steps completed',
+  });
+}
+
 describe('GoalsScreen', () => {
   it('renders the empty state', () => {
     const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
@@ -88,6 +107,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -110,6 +130,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -137,6 +158,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -209,6 +231,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -242,6 +265,10 @@ describe('GoalsScreen', () => {
   });
 
   it('creates a step from goal details, closes the modal stack, and uses the dropdown date picker', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 21, 9, 0, 0));
+
+    const deleteStepMock = jest.fn(async () => undefined);
     const createStepMock = jest.fn(async () => undefined);
     const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
     const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
@@ -253,6 +280,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: createStepMock,
+      deleteStep: deleteStepMock,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -265,7 +293,7 @@ describe('GoalsScreen', () => {
 
     expect(screen.queryByText('Goal Details')).toBeNull();
     expect(screen.queryByLabelText('Step estimated finish date')).toBeNull();
-    expect(screen.getByText('Selected date: 07-21-2026')).toBeTruthy();
+    expect(screen.getByText('Selected date: 07-22-2026')).toBeTruthy();
 
     fireEvent.changeText(screen.getByLabelText('Step name'), 'Book a training block');
     fireEvent.changeText(screen.getByLabelText('Step description'), 'Pick sessions for the next eight weeks.');
@@ -286,9 +314,11 @@ describe('GoalsScreen', () => {
         starter: 'Open the calendar',
         estimatedFinishDate: new Date(2026, 7, 12),
       });
-      expect(screen.queryByText('Goal Details')).toBeNull();
-      expect(screen.queryByText('Add Step')).toBeNull();
+      expect(screen.getByText('Goal Details')).toBeTruthy();
+      expect(screen.queryByLabelText('Save step')).toBeNull();
     });
+
+    jest.useRealTimers();
   });
 
   it('opens goal details and marks a goal complete from edit mode', async () => {
@@ -303,6 +333,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: markGoalCompletedMock,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -322,6 +353,48 @@ describe('GoalsScreen', () => {
     });
   });
 
+  it('edits a goal with the wizard-style date picker', async () => {
+    const updateGoalMock = jest.fn(async () => undefined);
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: updateGoalMock,
+      markGoalCompleted: async () => undefined,
+      createStep: async () => undefined,
+      deleteStep: async () => undefined,
+      updateStep: async () => undefined,
+      reorderSteps: async () => undefined,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'idle' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+    fireEvent.press(screen.getByLabelText('Edit goal'));
+    expect(screen.queryByLabelText('Edit goal estimated completion date')).toBeNull();
+
+    fireEvent.press(screen.getByLabelText('Open edit goal target month dropdown'));
+    fireEvent.press(screen.getByLabelText('Select edit goal target month 10 - Oct'));
+    fireEvent.press(screen.getByLabelText('Open edit goal target day dropdown'));
+    fireEvent.press(screen.getByLabelText('Select edit goal target day 15'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Save goal changes'));
+    });
+
+    await waitFor(() => {
+      expect(updateGoalMock).toHaveBeenCalledWith('goal-1', {
+        title: 'Run a 10k',
+        description: 'Build an eight-week training block.',
+        estimatedCompletionDate: new Date(2026, 9, 15),
+      });
+    });
+  });
+
   it('opens step scheduling with a prefilled event title and linked ids', async () => {
     const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
     const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
@@ -333,6 +406,7 @@ describe('GoalsScreen', () => {
       updateGoal: async () => undefined,
       markGoalCompleted: async () => undefined,
       createStep: async () => undefined,
+      deleteStep: async () => undefined,
       updateStep: async () => undefined,
       reorderSteps: async () => undefined,
     });
@@ -382,6 +456,141 @@ describe('GoalsScreen', () => {
           stepId: 'step-1',
         }),
       );
+    });
+  });
+
+  it('moves a step down with the arrow controls', async () => {
+    const reorderStepsMock = jest.fn(async () => undefined);
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeOrderedGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: async () => undefined,
+      markGoalCompleted: async () => undefined,
+      createStep: async () => undefined,
+      deleteStep: async () => undefined,
+      updateStep: async () => undefined,
+      reorderSteps: reorderStepsMock,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'idle' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Move Buy running shoes down'));
+    });
+
+    await waitFor(() => {
+      expect(reorderStepsMock).toHaveBeenCalledWith('goal-1', ['step-2', 'step-1']);
+    });
+  });
+
+  it('deletes a step from the step edit screen', async () => {
+    const deleteStepMock = jest.fn(async () => undefined);
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: async () => undefined,
+      markGoalCompleted: async () => undefined,
+      createStep: async () => undefined,
+      deleteStep: deleteStepMock,
+      updateStep: async () => undefined,
+      reorderSteps: async () => undefined,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'idle' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+    fireEvent.press(screen.getByText('Buy running shoes'));
+    fireEvent.press(screen.getByLabelText('Edit step'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Delete step'));
+    });
+
+    await waitFor(() => {
+      expect(deleteStepMock).toHaveBeenCalledWith('step-1');
+      expect(screen.queryByText('Step Details')).toBeNull();
+    });
+  });
+
+  it('shows no events scheduled when a step has no linked events', () => {
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: async () => undefined,
+      markGoalCompleted: async () => undefined,
+      createStep: async () => undefined,
+      deleteStep: async () => undefined,
+      updateStep: async () => undefined,
+      reorderSteps: async () => undefined,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'error' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+    fireEvent.press(screen.getByText('Buy running shoes'));
+
+    expect(screen.getByText('No Events Scheduled')).toBeTruthy();
+    expect(screen.queryByText('Unable to load linked events.')).toBeNull();
+  });
+
+  it('edits a step with the wizard-style date picker', async () => {
+    const updateStepMock = jest.fn(async () => undefined);
+    const mockedUseGoals = useGoals as jest.MockedFunction<typeof useGoals>;
+    const mockedUseGoalStepEvents = useGoalStepEvents as jest.MockedFunction<typeof useGoalStepEvents>;
+
+    mockedUseGoals.mockReturnValue({
+      goals: [makeGoal()],
+      uiState: 'ready',
+      createGoal: async () => undefined,
+      updateGoal: async () => undefined,
+      markGoalCompleted: async () => undefined,
+      createStep: async () => undefined,
+      deleteStep: async () => undefined,
+      updateStep: updateStepMock,
+      reorderSteps: async () => undefined,
+    });
+    mockedUseGoalStepEvents.mockReturnValue({ events: [], uiState: 'idle' });
+
+    render(<GoalsScreen />);
+
+    fireEvent.press(screen.getByText('Run a 10k'));
+    fireEvent.press(screen.getByText('Buy running shoes'));
+    fireEvent.press(screen.getByLabelText('Edit step'));
+    expect(screen.queryByLabelText('Edit step estimated finish date')).toBeNull();
+
+    fireEvent.press(screen.getByLabelText('Open edit step target month dropdown'));
+    fireEvent.press(screen.getByLabelText('Select edit step target month 09 - Sep'));
+    fireEvent.press(screen.getByLabelText('Open edit step target day dropdown'));
+    fireEvent.press(screen.getByLabelText('Select edit step target day 09'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Save step changes'));
+    });
+
+    await waitFor(() => {
+      expect(updateStepMock).toHaveBeenCalledWith('step-1', {
+        title: 'Buy running shoes',
+        description: 'Pick a pair that can handle weekly mileage.',
+        starter: 'Check two stores',
+        estimatedFinishDate: new Date(2026, 8, 9),
+      });
     });
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 import { NotesScreen } from '../screens/NotesScreen';
 import { useNotes } from '../features/notes/useNotes';
-import { CreateNoteInput, NoteRecord } from '../features/notes/noteTypes';
+import { CreateNoteInput, NoteRecord, UpdateNoteInput } from '../features/notes/noteTypes';
 
 jest.mock('../features/notes/useNotes', () => ({
   useNotes: jest.fn(),
@@ -26,10 +26,21 @@ function makeNote(overrides: Partial<NoteRecord> = {}): NoteRecord {
   };
 }
 
+function makeUseNotesReturn(overrides: Partial<ReturnType<typeof useNotes>> = {}): ReturnType<typeof useNotes> {
+  return {
+    notes: [],
+    uiState: 'empty',
+    createNote: async () => undefined,
+    updateNote: async () => undefined,
+    deleteNote: async () => undefined,
+    ...overrides,
+  };
+}
+
 describe('NotesScreen', () => {
   it('renders the empty state', () => {
     const mockedUseNotes = useNotes as jest.MockedFunction<typeof useNotes>;
-    mockedUseNotes.mockReturnValue({ notes: [], uiState: 'empty', createNote: async () => undefined });
+    mockedUseNotes.mockReturnValue(makeUseNotesReturn());
 
     render(<NotesScreen />);
 
@@ -39,11 +50,10 @@ describe('NotesScreen', () => {
 
   it('renders saved notes with source metadata', () => {
     const mockedUseNotes = useNotes as jest.MockedFunction<typeof useNotes>;
-    mockedUseNotes.mockReturnValue({
+    mockedUseNotes.mockReturnValue(makeUseNotesReturn({
       notes: [makeNote(), makeNote({ id: 'note-2', source: 'manual', title: 'Manual note', sourceEventId: null })],
       uiState: 'ready',
-      createNote: async () => undefined,
-    });
+    }));
 
     render(<NotesScreen />);
 
@@ -56,7 +66,7 @@ describe('NotesScreen', () => {
   it('opens the new note modal and saves a manual note', async () => {
     const createNote = jest.fn(async (_input: CreateNoteInput) => undefined);
     const mockedUseNotes = useNotes as jest.MockedFunction<typeof useNotes>;
-    mockedUseNotes.mockReturnValue({ notes: [], uiState: 'empty', createNote });
+    mockedUseNotes.mockReturnValue(makeUseNotesReturn({ createNote }));
 
     render(<NotesScreen />);
 
@@ -73,6 +83,61 @@ describe('NotesScreen', () => {
         body: 'Capture this before it disappears.',
         source: 'manual',
       });
+    });
+  });
+
+  it('opens a saved note and edits it', async () => {
+    const updateNote = jest.fn(async (_noteId: string, _fields: UpdateNoteInput) => undefined);
+    const mockedUseNotes = useNotes as jest.MockedFunction<typeof useNotes>;
+    mockedUseNotes.mockReturnValue(
+      makeUseNotesReturn({
+        notes: [makeNote()],
+        uiState: 'ready',
+        updateNote,
+      }),
+    );
+
+    render(<NotesScreen />);
+
+    fireEvent.press(screen.getByLabelText('Open note Captured thought'));
+    fireEvent.press(screen.getByLabelText('Edit note'));
+    fireEvent.changeText(screen.getByLabelText('Edit note title'), 'Sharper title');
+    fireEvent.changeText(screen.getByLabelText('Edit note body'), 'Rewritten body for a better saved note.');
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Save note changes'));
+    });
+
+    await waitFor(() => {
+      expect(updateNote).toHaveBeenCalledWith('note-1', {
+        title: 'Sharper title',
+        body: 'Rewritten body for a better saved note.',
+      });
+    });
+  });
+
+  it('deletes a saved note after confirmation', async () => {
+    const deleteNote = jest.fn(async (_noteId: string) => undefined);
+    const mockedUseNotes = useNotes as jest.MockedFunction<typeof useNotes>;
+    mockedUseNotes.mockReturnValue(
+      makeUseNotesReturn({
+        notes: [makeNote()],
+        uiState: 'ready',
+        deleteNote,
+      }),
+    );
+
+    render(<NotesScreen />);
+
+    fireEvent.press(screen.getByLabelText('Open note Captured thought'));
+    fireEvent.press(screen.getByLabelText('Delete note'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Confirm note delete'));
+    });
+
+    await waitFor(() => {
+      expect(deleteNote).toHaveBeenCalledWith('note-1');
     });
   });
 });
