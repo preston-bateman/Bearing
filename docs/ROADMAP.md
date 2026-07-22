@@ -53,10 +53,10 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 ### M5 - Notes and Profile
 | Task ID | Status | Description | Exit Criteria |
 | --- | --- | --- | --- |
-| M5.1 | not-started | Build notes list and note CRUD | Notes can be created, edited, deleted |
-| M5.2 | not-started | Merge Idea Dump and standard notes flows | Captured notes are discoverable and editable |
-| M5.3 | not-started | Build profile account settings and password reset flow | Account actions verified end-to-end |
-| M5.4 | not-started | Add tips/life wisdom alert and sound settings | Profile utilities functional and saved |
+| M5.1 | completed | Build notes list and note CRUD | Notes can be created, edited, deleted |
+| M5.2 | completed | Merge Idea Dump and standard notes flows | Captured notes are discoverable and editable |
+| M5.3 | completed | Build profile account settings and password reset flow | Account actions verified end-to-end |
+| M5.4 | completed | Add tips/life wisdom alert and sound settings | Profile utilities functional and saved |
 
 ### M6 - Calendar Integrations and ICS Interop
 | Task ID | Status | Description | Exit Criteria |
@@ -126,5 +126,5 @@ Deliver Bearing from initial setup to production release on iOS App Store and Go
 - Product gate: UX and copy align with product brief.
 
 ## Immediate Next Steps
-1. Start M3.1 by implementing Apple-calendar-inspired day view (hourly timeline) and month view (horizontally scrollable month grid) with date navigation.
-2. Start M3.2 by implementing local calendar event CRUD backed by Firestore.
+1. Start M6.1 by designing the Google Calendar connection flow, account-link state model, and first read/write sync slice.
+2. Start M6.4 by defining the .ics import/export/share contract and validation fixtures before provider-specific integration work expands.

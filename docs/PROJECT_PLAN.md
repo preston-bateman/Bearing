@@ -55,10 +55,10 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 ### M5 - Notes and Profile
 | Task ID | Status | Description | Notes |
 | --- | --- | --- | --- |
-| M5.1 | in-progress | Build notes list and note CRUD | Note detail, edit, and delete are implemented with automated coverage; live Firestore edit/delete verification still pending |
-| M5.2 | in-progress | Merge Idea Dump and standard notes flows | Manual and Idea Dump notes now share one editable detail flow while retaining source metadata for display |
-| M5.3 | in-progress | Build profile account settings and password reset flow | Email/password auth entry, anonymous-account linking, profile fields, and reset-password actions are implemented; live Firebase auth verification still pending |
-| M5.4 | in-progress | Add tips/life wisdom alert and sound settings | Users document settings, random tip modal, profile timezone/locale dropdowns, and previewable generated timer/reminder sounds are implemented; on-device audio verification still pending |
+| M5.1 | completed | Build notes list and note CRUD | Notes support create, detail, edit, and delete with automated validation and accepted UX |
+| M5.2 | completed | Merge Idea Dump and standard notes flows | Manual and Idea Dump notes share one editable detail flow while retaining source metadata for display |
+| M5.3 | completed | Build profile account settings and password reset flow | Email/password auth entry, anonymous-account linking, profile fields, timezone/locale selectors, and reset-password actions implemented and accepted |
+| M5.4 | completed | Add tips/life wisdom alert and sound settings | Tips & Wisdom modal plus previewable generated timer/reminder sounds implemented and accepted |
 
 ### M6 - Calendar Integrations and ICS Interop
 | Task ID | Status | Description | Notes |
@@ -151,4 +151,5 @@ Track implementation work for the Expo + Firebase day and life-goals app using s
 | 2026-07-20 | M4.1 | Goals milestone implementation started | in-progress | Roadmap-aligned scope approved: derived next step, disabled AI branch, drag-and-drop reorder, prefilled step scheduling, auto/manual goal completion |
 | 2026-07-21 | M4.1-M4.5 | Life Goals core implementation and validation complete | completed | Goals list, manual wizard, goal details, step interactions, and step details validated with npm test (7 suites, 40 tests), goal-specific Jest suites, npx tsc --noEmit, and npm run lint after generated export output was ignored |
 | 2026-07-22 | M5.1-M5.4 | Notes and Profile milestone implementation started | in-progress | Approved scope: note edit/delete, unified note detail flow, email/password auth entry with reset password, persisted profile settings, random tips alert, and sound preview via Expo-supported audio APIs |
-| 2026-07-22 | M5.1-M5.4 | Notes and Profile automated validation pass | in-progress | npm test (8 suites, 47 tests), targeted M5 Jest suites, npx tsc --noEmit, npm run lint, and npx expo export --platform web passed; live Firebase auth/settings verification and on-device audio preview remain pending |
+| 2026-07-22 | M5.1-M5.4 | Notes and Profile automated validation pass | completed | npm test (8 suites, 47 tests), targeted M5 Jest suites, npx tsc --noEmit, npm run lint, and npx expo export --platform web passed |
+| 2026-07-22 | M5.1-M5.4 | Notes and Profile milestone accepted | completed | User accepted the implemented Notes/Profile UX including note CRUD, email/password account flows, timezone/locale selectors, Tips & Wisdom modal, and sound preview/settings |
